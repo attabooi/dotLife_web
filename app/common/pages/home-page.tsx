@@ -1,20 +1,9 @@
-import { Link, type MetaFunction } from "react-router";
-import { ProductCard } from "~/features/product/components/product-card";
+import { Link, type MetaFunction } from "react-router";   
+import { ProductCard } from "~/features/products/components/product-card";
 import { Button } from "../components/ui/button";
 import { PostCard } from "~/features/community/components/post-card";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { DotIcon, EyeIcon, HeartIcon } from "lucide-react";
 import { IdeaCard } from "~/features/ideas/components/idea-card";
-import { Badge } from "../components/ui/badge";
 import { JobCard } from "~/features/jobs/components/job-card";
-import { Avatar, AvatarImage } from "../components/ui/avatar";
-import { AvatarFallback } from "@radix-ui/react-avatar";
 import { TeamCard } from "~/features/teams/components/team-card";
 
 export const meta: MetaFunction = () => {
@@ -27,13 +16,15 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+
+
 export default function HomePage() {
   return (
     <main className="px-20 space-y-40">
       <div className="grid grid-cols-3 gap-4">
         <div>
           <h2 className="text-5xl font-bold leading-tight tracking-tight">
-            Today's Products
+            Today's Products 
           </h2>
           <p className="text-xl font-light text-foreground mt-4">
             The Best products made by our community today.
@@ -44,7 +35,8 @@ export default function HomePage() {
         </div>
         {Array.from({ length: 11 }).map((_, index) => (
           <ProductCard
-            id={`product-${index}`}
+            key={`product-${index}`}
+            productId={`product-${index}`}
             name="Product Name"
             description="Product Description"
             commentsCount={12}
@@ -67,6 +59,7 @@ export default function HomePage() {
         </div>
         {Array.from({ length: 11 }).map((_, index) => (
           <PostCard
+            key={`post-${index}`}
             id={`post-${index}`}
             title="What is the best productivity app?"
             author="Nico"
@@ -90,6 +83,7 @@ export default function HomePage() {
         </div>
         {Array.from({ length: 11 }).map((_, index) => (
           <IdeaCard
+            key={`idea-${index}`}
             id={`idea-${index}`}
             title="A startup that creates an AI-powered generated personal trainer, delivering customized fitness routines based on the user's goals and preferences using a mobile app to track workouts and progress."
             views={123}
@@ -113,6 +107,7 @@ export default function HomePage() {
         </div>
         {Array.from({ length: 11 }).map((_, index) => (
           <JobCard
+            key={`job-${index}`}
             id={`job-${index}`}
             company="Tesla"
             companyLogoUrl="https://github.com/facebook.png"
@@ -140,14 +135,19 @@ export default function HomePage() {
         </div>
         {Array.from({ length: 11 }).map((_, index) => (
           <TeamCard
+            key={`team-${index}`}
             id={`team-${index}`}
             leaderUsername="attabooi"
             leaderAvatarUrl="https://github.com/attabooi.png"
-            positions={["React Developer", "Backend Developer", "Product Manager"]}
+            positions={[
+              "React Developer",
+              "Backend Developer",
+              "Product Manager",
+            ]}
             description="a new product"
             joinUrl="/teams/teamId"
           />
-        ))} 
+        ))}
       </div>
     </main>
   );

@@ -12,7 +12,7 @@ import {
 import { Button } from "~/common/components/ui/button";
 
 interface ProductCardProps {
-  id: string;
+  productId: string;
   name: string;
   description: string;
   commentsCount: number;
@@ -21,7 +21,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
-  id,
+  productId,
   name,
   description,
   commentsCount,
@@ -29,7 +29,7 @@ export function ProductCard({
   votesCount,
 }: ProductCardProps) {
   return (
-    <Link to={`/products/${id}`} className="block h-full">
+    <Link to={`/products/${productId}`} className="block h-full">
       <Card className="flex flex-row w-full h-full items-center justify-between bg-card p-4">
         {/* Main Content */}
         <div>

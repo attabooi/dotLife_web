@@ -1,42 +1,156 @@
+import { DateTime } from "luxon";
 import type { Route } from "./+types/yearly-leaderboards-page";
+import { data, isRouteErrorResponse, Link } from "react-router";
+import { z } from "zod";
+import { HeroSection } from "~/common/components/hero-section";
+import { ProductCard } from "../components/product-card";
+import { Button } from "~/common/components/ui/button";
+import ProductPagination from "~/common/components/product-pagination";
 
-export function meta({ params }: Route.MetaArgs) {
+const paramsSchema = z.object({
+  year: z.coerce.number(),
+});
+
+const meta: Route.MetaFunction = ({ params }) => {
+  
+  const date = DateTime.fromObject({
+    year: Number(params.year),
+  }).setZone("Asia/Seoul").setLocale("ko");
   return [
-    { title: `${params.year} Yearly Leaderboard | dotLife` },
+    {
+      title: `Best of ${date.toLocaleString({
+        year: "numeric",
+      })} | dotLife`,
+    },
     {
       name: "description",
-      content: `Top performing products for the year ${params.year}.`,
+      content: "",
     },
   ];
-}
+};
 
-export function loader({ params }: Route.LoaderArgs) {
-  return { year: params.year };
-}
+export const loader = ({ params }: Route.LoaderArgs) => {
+  const { success, data: parsedData } = paramsSchema.safeParse(params);
 
-export function action({}: Route.ActionArgs) {
-  return {};
-}
+  if (!success) {
+    throw data(
+      {
+        error_code: "INVALID_PARAMS",
+        message: "Invalid params",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+  const date = DateTime.fromObject({
+    year: parsedData.year,
+  }).setZone("Asia/Seoul");
+  if (!date.isValid) {
+    throw data(
+      {
+        error_code: "INVALID_DATE",
+        message: "Invalid date",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
 
-export default function YearlyLeaderboardsPage({ loaderData }: Route.ComponentProps) {
-  const { year } = loaderData || { year: '' };
+  const today = DateTime.now().setZone("Asia/Seoul").startOf("month");
+  if (date > today) {
+    throw data(
+      {
+        error_code: "FUTURE_DATE",
+        message: "Future date",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  return {
+    ...parsedData,
+  };
+};
+
+export default function MonthlyLeaderboardsPage({
+  loaderData,
+}: Route.ComponentProps) {
+  const urlDate = DateTime.fromObject({
+    year: loaderData.year,
+  }).setZone("Asia/Seoul");
+
+  const previousYear = urlDate.minus({ years: 1 });
+  const nextYear = urlDate.plus({ years: 1 });
+  const isToday = urlDate.equals(DateTime.now().startOf("year"));
 
   return (
-    <main className="px-20 py-8">
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight">
-            {year} Yearly Leaderboard
-          </h1>
-          <p className="text-xl font-light text-foreground mt-4">
-            Top performing products for the year {year}.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6">
-          <p className="text-muted-foreground">Loading yearly leaderboard data...</p>
-        </div>
+    <div className="space-y-8">
+      <HeroSection
+        title={`Best of ${urlDate
+          .toLocaleString({
+            year: "numeric",
+          })}`}
+        description=""
+      />
+
+      <div className="flex items-center justify-center gap-2">
+        <Button variant="secondary" asChild>
+          <Link
+            to={`/products/leaderboards/yearly/${previousYear.year}`}
+          >
+            &larr; {previousYear.toLocaleString({
+              year: "numeric",
+            })}
+          </Link>
+        </Button>
+        {!isToday ? (
+          <Button variant="secondary" asChild>
+            <Link
+              to={`/products/leaderboards/yearly/${nextYear.year}`}
+            >
+              {nextYear.toLocaleString({
+                year: "numeric",
+              })}
+              &rarr;
+            </Link>
+          </Button>
+        ) : null}
       </div>
-    </main>
+
+      <div className="space-y-5 w-full max-w-screen-md mx-auto">
+        {Array.from({ length: 11 }).map((_, index) => (
+          <ProductCard
+            key={`product-${index}`}
+            id={`product-${index}`}
+            name="Product Name"
+            description="Product Description"
+            commentsCount={12}
+            viewsCount={12}
+            votesCount={120}
+          />
+        ))}
+      </div>
+      <ProductPagination totalPages={10} currentPage={1} />
+    </div>
   );
-} 
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isRouteErrorResponse(error)) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        {error.data.message} / {error.data.error_code}
+      </div>
+    );
+  }
+  if (error instanceof Error) {
+    return <div className="container mx-auto px-4 py-8">{error.message}</div>;
+  }
+  return (
+    <div className="container mx-auto px-4 py-8">Unknown error happened</div>
+  );
+}

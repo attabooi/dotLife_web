@@ -1,42 +1,157 @@
+import { DateTime } from "luxon";
 import type { Route } from "./+types/weekly-leaderboards-page";
+import { data, isRouteErrorResponse, Link } from "react-router";
+import { z } from "zod";
+import { HeroSection } from "~/common/components/hero-section";
+import { ProductCard } from "../components/product-card";
+import { Button } from "~/common/components/ui/button";
+import ProductPagination from "~/common/components/product-pagination";
 
-export function meta({ params }: Route.MetaArgs) {
+const paramsSchema = z.object({
+  year: z.coerce.number(),
+  week: z.coerce.number(),
+});
+
+const meta: Route.MetaFunction = ({ params }) => {
+  const date = DateTime.fromObject({
+    weekYear: Number(params.year),
+    weekNumber: Number(params.week),
+  }).setZone("Asia/Seoul").setLocale("ko");
   return [
-    { title: `Week ${params.week} of ${params.month}/${params.year} Leaderboard | dotLife` },
+    {
+      title: `Best of week ${date
+          .startOf("week")
+          .toLocaleString(DateTime.DATE_SHORT)} - ${date
+          .endOf("week")
+          .toLocaleString(DateTime.DATE_SHORT)} | dotLife`,
+    },
     {
       name: "description",
-      content: `Top performing products for week ${params.week} of ${params.month}/${params.year}.`,
+      content: "",
     },
   ];
-}
+};
 
-export function loader({ params }: Route.LoaderArgs) {
-  return { year: params.year, month: params.month, week: params.week };
-}
+export const loader = ({ params }: Route.LoaderArgs) => {
+  const { success, data: parsedData } = paramsSchema.safeParse(params);
 
-export function action({}: Route.ActionArgs) {
-  return {};
-}
+  if (!success) {
+    throw data(
+      {
+        error_code: "INVALID_PARAMS",
+        message: "Invalid params",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+  const date = DateTime.fromObject({
+    weekYear: parsedData.year,
+    weekNumber: parsedData.week,
+  }).setZone("Asia/Seoul");
+  if (!date.isValid) {
+    throw data(
+      {
+        error_code: "INVALID_DATE",
+        message: "Invalid date",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
 
-export default function WeeklyLeaderboardsPage({ loaderData }: Route.ComponentProps) {
-  const { year, month, week } = loaderData;
+  const today = DateTime.now().setZone("Asia/Seoul").startOf("day");
+  if (date > today) {
+    throw data(
+      {
+        error_code: "FUTURE_DATE",
+        message: "Future date",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  return {
+    ...parsedData,
+  };
+};
+
+export default function WeeklyLeaderboardsPage({
+  loaderData,
+}: Route.ComponentProps) {
+  const urlDate = DateTime.fromObject({
+    weekYear: loaderData.year,
+    weekNumber: loaderData.week,
+  }).setZone("Asia/Seoul");
+
+  const previousWeek = urlDate.minus({ weeks: 1 });
+  const nextWeek = urlDate.plus({ weeks: 1 });
+  const isToday = urlDate.equals(DateTime.now().startOf("week"));
 
   return (
-    <main className="px-20 py-8">
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight">
-            Week {week} of {month}/{year} Leaderboard
-          </h1>
-          <p className="text-xl font-light text-foreground mt-4">
-            Top performing products for week {week} of {month}/{year}.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6">
-          <p className="text-muted-foreground">Loading weekly leaderboard data...</p>
-        </div>
+    <div className="space-y-8">
+      <HeroSection
+        title={`Best of week ${urlDate
+          .startOf("week")
+          .toLocaleString(DateTime.DATE_SHORT)} - ${urlDate
+          .endOf("week")
+          .toLocaleString(DateTime.DATE_SHORT)}`}
+        description=""
+      />
+
+      <div className="flex justify-center gap-2">
+        <Button variant="secondary" asChild>
+          <Link
+            to={`/products/leaderboards/weekly/${previousWeek.year}/${previousWeek.weekNumber}`}
+          >
+            &larr; {previousWeek.toLocaleString(DateTime.DATE_SHORT)}
+          </Link>
+        </Button>
+        {!isToday ? (
+          <Button variant="secondary" asChild>
+            <Link
+              to={`/products/leaderboards/weekly/${nextWeek.year}/${nextWeek.weekNumber}`}
+            >
+              {nextWeek.toLocaleString(DateTime.DATE_SHORT)} &rarr;
+            </Link>
+          </Button>
+        ) : null}
       </div>
-    </main>
+
+      <div className="space-y-5 w-full max-w-screen-md mx-auto">
+        {Array.from({ length: 11 }).map((_, index) => (
+          <ProductCard
+            key={`product-${index}`}
+            id={`product-${index}`}
+            name="Product Name"
+            description="Product Description"
+            commentsCount={12}
+            viewsCount={12}
+            votesCount={120}
+          />
+        ))}
+      </div>
+      <ProductPagination totalPages={10} currentPage={1} />
+    </div>
   );
-} 
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isRouteErrorResponse(error)) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        {error.data.message} / {error.data.error_code}
+      </div>
+    );
+  }
+  if (error instanceof Error) {
+    return <div className="container mx-auto px-4 py-8">{error.message}</div>;
+  }
+  return (
+    <div className="container mx-auto px-4 py-8">Unknown error happened</div>
+  );
+}

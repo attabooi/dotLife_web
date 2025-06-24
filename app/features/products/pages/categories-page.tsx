@@ -1,6 +1,8 @@
-import type { Route } from "./+types/categories-page";
+import { HeroSection } from "~/common/components/hero-section";
+import type { Route } from "./+types/category-page";
+import { CategoryCard } from "../components/category-card";
 
-export function meta({}: Route.MetaArgs) {
+export const meta: Route.MetaFunction = ({}) => {
   return [
     { title: "Categories | dotLife" },
     {
@@ -8,22 +10,22 @@ export function meta({}: Route.MetaArgs) {
       content: "Browse products by categories.",
     },
   ];
-}
-
-export function loader({}: Route.LoaderArgs) {
-  return {};
-}
-
-export function action({}: Route.ActionArgs) {
-  return {};
-}
+};
 
 export default function CategoriesPage() {
   return (
-    <main className="px-20 py-8">
-      <h1 className="text-4xl font-bold leading-tight tracking-tight">
-        Categories
-      </h1>
-    </main>
+    <div className="space-y-10">
+      <HeroSection title="Categories" description="Browse products by categories." />
+      <div className="grid grid-cols-4 gap-10">
+        {Array.from({ length: 10 }).map((_, index) => (
+          <CategoryCard
+            key={`category-${index}`}
+            id={`category-${index}`}
+            name={`Category Name `}
+            description={`Category Description `}
+          />
+        ))}
+      </div>
+    </div>
   );
 } 
