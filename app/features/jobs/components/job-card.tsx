@@ -22,7 +22,8 @@ interface JobCardProps {
   applyUrl: string;
 }
 
-export function JobCard({
+  export function JobCard({
+  id,
   company,
   companyLogoUrl,
   companyHq,
@@ -63,7 +64,7 @@ export function JobCard({
           <p className="text-sm font-medium text-muted-foreground">{companyHq}</p>
         </div>
         <Button variant="secondary" size="sm">
-          Apply now
+        <Link to={`/jobs/${id}`}>Apply now</Link>
         </Button>
       </CardFooter>
     </Card>
