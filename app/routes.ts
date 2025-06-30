@@ -74,4 +74,40 @@ export default [
       ]),
     ]),
   ]),
+  ...prefix("/community", [
+    index("features/community/pages/community-page.tsx"),
+    route("/submit", "features/community/pages/submit-post-page.tsx"),
+    route("/:postId", "features/community/pages/post-page.tsx"),
+  ]),
+  ...prefix("teams", [
+    index("features/teams/pages/teams-page.tsx"),
+    route("/:teamId", "features/teams/pages/team-page.tsx"),
+    route("/submit", "features/teams/pages/submit-team-page.tsx"),
+  ]),
+  ...prefix("/my", [
+    ...prefix("/dashboard", [
+      index("features/users/pages/dashboard-page.tsx"),
+      route("/ideas", "features/users/pages/dashboard-ideas-page.tsx"),
+      route(
+        "/products/:productId",
+        "features/users/pages/dashboard-product-page.tsx"
+      ),
+    ]),
+    layout("features/users/layouts/messages-layout.tsx", [
+      ...prefix("/messages", [
+        index("features/users/pages/messages-page.tsx"),
+        route("/:messageId", "features/users/pages/message-page.tsx"),
+      ]),
+    ]),
+    route("/profile", "features/users/pages/my-profile-page.tsx"),
+    route("/settings", "features/users/pages/settings-page.tsx"),
+    route("/notifications", "features/users/pages/notifications-page.tsx"),
+  ]),
+  layout("features/users/layouts/profile-layout.tsx", [
+    ...prefix("/users/:username", [
+      index("features/users/pages/profile-page.tsx"),
+      route("/products", "features/users/pages/profile-products-page.tsx"),
+      route("/posts", "features/users/pages/profile-posts-page.tsx"),
+    ]),
+  ]),
 ] satisfies RouteConfig;
