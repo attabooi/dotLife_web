@@ -20,20 +20,24 @@ import {
       process.env.SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name) {
-            const all = parseCookieHeader(request.headers.get("Cookie") ?? "");
-            return all.find((c) => c.name === name)?.value;
-          },
-          set(name, value, options) {
-            headers.append(
-              "Set-Cookie",
-              serializeCookieHeader(name, value, options)
+          getAll() {
+            const cookies = parseCookieHeader(request.headers.get("Cookie") ?? "");
+            return cookies.filter((cookie): cookie is { name: string; value: string } => 
+              cookie.value !== undefined
             );
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              headers.append(
+                "Set-Cookie",
+                serializeCookieHeader(name, value, options)
+              );
+            });
           },
         },
       }
     );
-  
+
     return {
       client: serverSideClient,
       headers,

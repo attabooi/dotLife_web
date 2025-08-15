@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { getQuests } from "../queries";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "~/common/components/ui/dialog";
 import { X } from "lucide-react";
+import type { Route } from "./+types/jobs-page";
 import { 
   Plus, 
   CheckCircle, 
@@ -55,8 +56,8 @@ export const meta = () => {
   ];
 };
 
-export const loader = async () => {
-  const rows = await getQuests();
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const rows = await getQuests(request);
   return { quests: rows };
 };
 
