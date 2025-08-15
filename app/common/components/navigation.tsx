@@ -32,113 +32,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const menus = [
   {
-    name: "Products",
-    to: "/products",
-    items: [
-      {
-        name: "Leaderboards",
-        description: "See the top performers in your community", 
-        to: "/products/leaderboards",
-      },
-      {
-        name: "Categories",
-        description: "See the top categories in your community",
-        to: "/products/categories",
-      },
-      {
-        name: "Search",
-        description: "Search for a product",
-        to: "/products/search",
-      },
-      {
-        name: "Submit a Product",
-        description: "Submit a product to be featured on community",
-        to: "/products/submit",
-      },
-      {
-        name: "Promote",
-        description: "Promote your product to the dotLife community",
-        to: "/products/promote",
-      },
-    ],
-  },
-  {
-    name: "Jobs",
+    name: "Quest",
     to: "/jobs",
-    items: [
-      {
-        name: "Remote Jobs",
-        description: "Find a remote job in the dotLife community",
-        to: "/jobs?location=remote",
-      },
-      {
-        name: "Full-Time Jobs",
-        description: "Find a full-time job in the dotLife community",
-        to: "/jobs?type=full-time",
-      },
-      {
-        name: "Freelance Jobs",
-        description: "Find a freelance job in the dotLife community",
-        to: "/jobs?type=freelance",
-      },
-      {
-        name: "Internships",
-        description: "Find an internship in the dotLife community",
-        to: "/jobs?type=internship",
-      },
-      {
-        name: "Submit a Job",
-        description: "Submit a job to be featured on dotLife",
-        to: "/jobs/submit",
-      },
-    ],
   },
   {
-    name: "Community",
+    name: "My Tower",
+    to: "/products",
+  },
+  {
+    name: "Rank",
     to: "/community",
-    items: [
-      {
-        name: "All Posts",
-        description: "See all posts in the dotLife community",
-        to: "/community",
-      },
-      {
-        name: "Top Posts",
-        description: "See the top posts in the dotLife community",
-        to: "/community?sort=top",
-      },
-      {
-        name: "New Posts",
-        description: "See the latest posts in the dotLife community",
-        to: "/community?sort=new",
-      },
-      {
-        name: "Create a Post",
-        description: "Create a post to the dotLife community",
-        to: "/community/create",
-      },
-    ],
   },
-  {
-    name: "IdeasGPT",
-    to: "/ideas",
-  },
-  {
-    name: "Teams",
-    to: "/teams",
-    items: [
-      {
-        name: "All Teams",
-        description: "See all teams in the dotLife community",
-        to: "/teams",
-      },
-      {
-        name: "Create a Team",
-        description: "Create a team to the dotLife community",
-        to: "/teams/create",
-      },
-    ],
-  },
+
 ];
 
 export default function Navigation({

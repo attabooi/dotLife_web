@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1751412136350,
+      "tag": "0000_fast_karen_page",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1751415674264,
+      "tag": "0001_outstanding_archangel",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1751420946963,
+      "tag": "0002_marvelous_spiral",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1751438811209,
+      "tag": "0003_confused_mattie_franklin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1751440169575,
+      "tag": "0004_serious_thena",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1751440906332,
+      "tag": "0005_gorgeous_speed_demon",
+      "breakpoints": true
+    }
+  ]
+}
