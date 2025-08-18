@@ -58,14 +58,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   } = await client.auth.getUser();
   
   if (user) {
-    try {
-      const profile = await getUserById(client, { id: user?.id });
-      return { user, profile };
-    } catch (error) {
-      console.error("Failed to fetch user profile:", error);
-      // Return user without profile if profile fetch fails
-      return { user, profile: null };
-    }
+    const profile = await getUserById(client, { id: user?.id });
+    return { user, profile };
   }
   return { user: null, profile: null };
 };
