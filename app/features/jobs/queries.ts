@@ -1,146 +1,172 @@
 import { makeSSRClient } from "~/supa-client";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
-interface CreateQuestParams {
-  userId: string;
+// Get user's quests with calculated stats
+export const getQuests = async (request: Request) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await client
+    .from("quest_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .eq("quest_date", new Date().toISOString().split('T')[0]);
+    
+  if (error) throw error;
+  return data;
+};
+
+// Get player stats
+export const getPlayerStats = async (request: Request, userId: string) => {
+  const { client } = makeSSRClient(request);
+  
+  const { data, error } = await client
+    .from("player_stats")
+    .select("*")
+    .eq("profile_id", userId)
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+// Get today's quest summary
+export const getTodayQuestSummary = async (request: Request) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await client
+    .from("quest_daily_summary_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .eq("quest_date", new Date().toISOString().split('T')[0])
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+// Create new quest (triggers will handle stats)
+export const createQuest = async (request: Request, questData: {
   title: string;
   description: string;
-  difficulty: "easy" | "medium" | "hard";
-}
-
-interface CompleteQuestParams {
-  userId: string;
-  questId: string;
-}
-
-const DIFFICULTY_REWARDS = {
-  easy: { xp: 10, bricks: 1 },
-  medium: { xp: 20, bricks: 2 },
-  hard: { xp: 35, bricks: 3 }
-};
-
-export const getQuests = async (client: SupabaseClient, userId: string) => {
-  const { data, error } = await client
-    .from("daily_quests")
-    .select("*")
-    .eq("profile_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data;
-};
-
-export const getUserStats = async (client: SupabaseClient, userId: string) => {
-  const { data, error } = await client
-    .from("player_stats")
-    .select("*")
-    .eq("profile_id", userId)
-    .single();
-
-  if (error) {
-    // If stats don't exist, create them
-    if (error.code === "PGRST116") {
-      const { data: newStats, error: createError } = await client
-        .from("player_stats")
-        .insert({
-          profile_id: userId,
-          level: 1,
-          total_xp: 0,
-          current_xp: 0,
-          consecutive_days: 0,
-          total_bricks: 0,
-          available_bricks: 20,
-        })
-        .select()
-        .single();
-
-      if (createError) throw createError;
-      return newStats;
-    }
-    throw error;
-  }
-
-  return data;
-};
-
-export const createQuest = async (
-  client: SupabaseClient,
-  { userId, title, description, difficulty }: CreateQuestParams
-) => {
+  difficulty: 'easy' | 'medium' | 'hard';
+}) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const difficultyRewards = {
+    easy: { xp: 10, bricks: 1 },
+    medium: { xp: 20, bricks: 1 },
+    hard: { xp: 35, bricks: 2 }
+  };
+  
+  const reward = difficultyRewards[questData.difficulty];
+  const today = new Date().toISOString().split('T')[0];
   const deadline = new Date();
   deadline.setHours(23, 59, 59, 999);
-
-  const { data: quest, error } = await client
+  
+  const { data, error } = await client
     .from("daily_quests")
     .insert({
-      profile_id: userId,
-      title,
-      description,
-      difficulty,
-      reward_xp: DIFFICULTY_REWARDS[difficulty].xp,
-      reward_bricks: DIFFICULTY_REWARDS[difficulty].bricks,
-      quest_date: new Date().toISOString().split("T")[0],
-      deadline: deadline.toISOString(),
+      profile_id: user.id,
+      title: questData.title,
+      description: questData.description,
+      difficulty: questData.difficulty,
+      reward_xp: reward.xp,
+      reward_bricks: reward.bricks,
+      quest_date: today,
+      deadline: deadline.toISOString()
     })
     .select()
     .single();
-
+    
   if (error) throw error;
-
-  return {
-    type: 'create',
-    quest
-  };
+  return data;
 };
 
-export const completeQuest = async (
-  client: SupabaseClient,
-  { userId, questId }: CompleteQuestParams
-) => {
-  // Start a transaction
-  const { data: quest, error: questError } = await client
+// Complete quest (triggers will handle all stats updates)
+export const completeQuest = async (request: Request, questId: number) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await client
     .from("daily_quests")
-    .update({ completed: true, completed_at: new Date().toISOString() })
-    .eq("quest_id", questId)
-    .eq("profile_id", userId)
-    .select()
-    .single();
-
-  if (questError) throw questError;
-
-  // Update player stats
-  const { data: currentStats, error: statsError } = await client
-    .from("player_stats")
-    .select("*")
-    .eq("profile_id", userId)
-    .single();
-
-  if (statsError) throw statsError;
-
-  const newXp = currentStats.current_xp + quest.reward_xp;
-  const levelUp = newXp >= currentStats.level * 100;
-  const newLevel = levelUp ? currentStats.level + 1 : currentStats.level;
-  const finalXp = levelUp ? newXp - (currentStats.level * 100) : newXp;
-
-  const { data: updatedStats, error: updateError } = await client
-    .from("player_stats")
-    .update({
-      level: newLevel,
-      current_xp: finalXp,
-      total_xp: currentStats.total_xp + quest.reward_xp,
-      total_bricks: currentStats.total_bricks + quest.reward_bricks,
-      available_bricks: currentStats.available_bricks + quest.reward_bricks,
-      last_completed_date: new Date().toISOString(),
+    .update({ 
+      completed: true, 
+      completed_at: new Date().toISOString() 
     })
-    .eq("profile_id", userId)
+    .eq("quest_id", questId)
+    .eq("profile_id", user.id)
     .select()
     .single();
+    
+  if (error) throw error;
+  return data;
+};
 
-  if (updateError) throw updateError;
+// Confirm today's quests
+export const confirmQuests = async (request: Request) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { error } = await client
+    .from("daily_quests")
+    .update({ confirmed: true })
+    .eq("profile_id", user.id)
+    .eq("quest_date", today);
+    
+  if (error) throw error;
+  return { success: true };
+};
 
-  return {
-    type: 'complete',
-    quest,
-    stats: updatedStats
-  };
+// Delete quest
+export const deleteQuest = async (request: Request, questId: number) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { error } = await client
+    .from("daily_quests")
+    .delete()
+    .eq("quest_id", questId)
+    .eq("profile_id", user.id);
+    
+  if (error) throw error;
+  return { success: true };
+};
+
+// Update quest
+export const updateQuest = async (request: Request, questId: number, updates: {
+  title?: string;
+  description?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+}) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await client
+    .from("daily_quests")
+    .update(updates)
+    .eq("quest_id", questId)
+    .eq("profile_id", user.id)
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return data;
 };
