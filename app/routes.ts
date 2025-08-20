@@ -10,29 +10,6 @@ export default [
   index("common/pages/home-page.tsx"),
   ...prefix("products", [
     index("features/products/pages/products-page.tsx"),
-    ...prefix("leaderboards", [
-      index("features/products/pages/leaderboards-page.tsx"),
-      route(
-        "/yearly/:year",
-        "features/products/pages/yearly-leaderboards-page.tsx"
-      ),
-      route(
-        "/monthly/:year/:month",
-        "features/products/pages/monthly-leaderboards-page.tsx"
-      ),
-      route(
-        "/weekly/:year/:week",
-        "features/products/pages/weekly-leaderboards-page.tsx"
-      ),
-      route(
-        "/daily/:year/:month/:day",
-        "features/products/pages/daily-leaderboards-page.tsx"
-      ),
-      route(
-        "/:period",
-        "features/products/pages/leaderboards-redirection-page.tsx"
-      ),
-    ]),
     ...prefix("categories", [
       index("features/products/pages/categories-page.tsx"),
       route("/:category", "features/products/pages/category-page.tsx"),
@@ -55,10 +32,38 @@ export default [
     index("features/ideas/pages/ideas-page.tsx"),
     route("/:ideaId", "features/ideas/pages/idea-page.tsx"),
   ]),
-  ...prefix("/jobs", [
+  ...prefix("/quests", [
     index("features/jobs/pages/jobs-page.tsx"),
     route("/:jobId", "features/jobs/pages/job-page.tsx"),
     route("/submit", "features/jobs/pages/submit-job-page.tsx"),
+  ]),
+  ...prefix("/tower", [
+    index("features/products/pages/leaderboards-page.tsx"),
+    route(
+      "/yearly/:year",
+      "features/products/pages/yearly-leaderboards-page.tsx"
+    ),
+    route(
+      "/monthly/:year/:month",
+      "features/products/pages/monthly-leaderboards-page.tsx"
+    ),
+    route(
+      "/weekly/:year/:week",
+      "features/products/pages/weekly-leaderboards-page.tsx"
+    ),
+    route(
+      "/daily/:year/:month/:day",
+      "features/products/pages/daily-leaderboards-page.tsx"
+    ),
+    route(
+      "/:period",
+      "features/products/pages/leaderboards-redirection-page.tsx"
+    ),
+  ]),
+  ...prefix("/rank", [
+    index("features/community/pages/community-page.tsx"),
+    route("/submit", "features/community/pages/submit-post-page.tsx"),
+    route("/:postId", "features/community/pages/post-page.tsx"),
   ]),
   ...prefix("/auth", [
     layout("features/auth/layouts/auth-layout.tsx", [
@@ -74,11 +79,6 @@ export default [
       ]),
     ]),
     route("/logout", "features/auth/pages/logout-page.tsx"),
-  ]),
-  ...prefix("/community", [
-    index("features/community/pages/community-page.tsx"),
-    route("/submit", "features/community/pages/submit-post-page.tsx"),
-    route("/:postId", "features/community/pages/post-page.tsx"),
   ]),
   ...prefix("teams", [
     index("features/teams/pages/teams-page.tsx"),

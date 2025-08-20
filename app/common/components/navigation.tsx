@@ -33,17 +33,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 const menus = [
   {
     name: "Quest",
-    to: "/jobs",
+    to: "/quests",
   },
   {
     name: "My Tower",
-    to: "/products",
+    to: "/tower",
   },
   {
     name: "Rank",
-    to: "/community",
+    to: "/rank",
   },
-
 ];
 
 export default function Navigation({
