@@ -1,6 +1,13 @@
 -- Player stats triggers for automatic updates
 -- Handles: new profile creation, quest completion, heart calculation
 
+-- Drop all existing functions and triggers first
+drop trigger if exists quest_completion_trigger on public.daily_quests;
+drop trigger if exists profile_to_player_stats_trigger on public.profiles;
+drop function if exists public.handle_quest_completion() cascade;
+drop function if exists public.update_player_hearts(uuid, date) cascade;
+drop function if exists public.handle_new_profile() cascade;
+
 -- 1. Create player stats when new profile is created
 create or replace function public.handle_new_profile()
 returns trigger
@@ -36,7 +43,6 @@ end;
 $$;
 
 -- Trigger for new profile
-drop trigger if exists profile_to_player_stats_trigger on public.profiles;
 create trigger profile_to_player_stats_trigger
 after insert on public.profiles
 for each row execute function public.handle_new_profile();
@@ -82,7 +88,7 @@ begin
 end;
 $$;
 
--- 3. Handle quest completion and update all stats
+-- 3. Handle quest completion and update all stats (SIMPLIFIED)
 create or replace function public.handle_quest_completion()
 returns trigger
 language plpgsql
@@ -95,7 +101,7 @@ declare
   v_xp_needed int;
   v_today date;
   v_yesterday date;
-  v_bricks_earned int;
+  v_all_completed_today boolean;
 begin
   -- Only process when quest is marked as completed
   if new.completed = true and (old.completed = false or old.completed is null) then
@@ -116,6 +122,14 @@ begin
       v_new_xp := v_new_xp - v_xp_needed;
     end if;
     
+    -- Check if all quests for today are completed
+    select 
+      count(*) = sum(case when completed then 1 else 0 end)
+    into v_all_completed_today
+    from public.daily_quests
+    where profile_id = new.profile_id 
+      and quest_date = v_today;
+    
     -- Calculate consecutive days and bricks
     v_yesterday := v_today - interval '1 day';
     
@@ -133,11 +147,16 @@ begin
         xp_to_next_level = v_new_level * 100,
         consecutive_days = consecutive_days + 1,
         last_completed_date = v_today,
-        total_bricks = total_bricks + case
-          when consecutive_days + 1 >= 30 then 4
-          when consecutive_days + 1 >= 5 then 3
-          when consecutive_days + 1 >= 2 then 2
-          else 1
+        -- Only give bricks if all quests are completed today
+        total_bricks = case 
+          when v_all_completed_today then
+            total_bricks + case
+              when consecutive_days + 1 >= 30 then 6
+              when consecutive_days + 1 >= 20 then 5
+              when consecutive_days + 1 >= 10 then 4
+              else 3
+            end
+          else total_bricks
         end
       where profile_id = new.profile_id;
     else
@@ -149,7 +168,11 @@ begin
         xp_to_next_level = v_new_level * 100,
         consecutive_days = 1,
         last_completed_date = v_today,
-        total_bricks = total_bricks + 1
+        -- Only give bricks if all quests are completed today
+        total_bricks = case 
+          when v_all_completed_today then total_bricks + 3
+          else total_bricks
+        end
       where profile_id = new.profile_id;
     end if;
     
@@ -162,7 +185,11 @@ end;
 $$;
 
 -- Trigger for quest completion
-drop trigger if exists quest_completion_trigger on public.daily_quests;
 create trigger quest_completion_trigger
 after update on public.daily_quests
-for each row execute function public.handle_quest_completion(); 
+for each row execute function public.handle_quest_completion();
+
+-- Grant necessary permissions for trigger functions
+grant execute on function public.handle_quest_completion() to authenticated;
+grant execute on function public.update_player_hearts(uuid, date) to authenticated;
+grant execute on function public.handle_new_profile() to authenticated; 

@@ -1,7 +1,45 @@
 import { makeSSRClient } from "~/supa-client";
 
-// Get user's quests with calculated stats
+// Get quest history (past records)
+export const getQuestHistory = async (request: Request, limit: number = 30) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await (client as any)
+    .from("quest_history_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .order("quest_date", { ascending: false })
+    .limit(limit);
+    
+  if (error) throw error;
+  return data;
+};
+
+// Get today's quests with calculated stats
 export const getQuests = async (request: Request) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  // Use current date in local timezone
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  
+  const { data, error } = await client
+    .from("quest_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .eq("quest_date", today);
+    
+  if (error) throw error;
+  return data;
+};
+
+// Test function to simulate different dates (for development only)
+export const getQuestsForDate = async (request: Request, targetDate: string) => {
   const { client } = makeSSRClient(request);
   const { data: { user } } = await client.auth.getUser();
   
@@ -11,7 +49,44 @@ export const getQuests = async (request: Request) => {
     .from("quest_view")
     .select("*")
     .eq("profile_id", user.id)
-    .eq("quest_date", new Date().toISOString().split('T')[0]);
+    .eq("quest_date", targetDate);
+    
+  if (error) throw error;
+  return data;
+};
+
+// Test function to get summary for specific date
+export const getQuestSummaryForDate = async (request: Request, targetDate: string) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await client
+    .from("quest_daily_summary_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .eq("quest_date", targetDate)
+    .single();
+    
+  if (error && error.code !== 'PGRST116') throw error;
+  return data || null;
+};
+
+// Test function to get history for specific date range
+export const getQuestHistoryForDateRange = async (request: Request, startDate: string, endDate: string) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const { data, error } = await (client as any)
+    .from("quest_history_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .gte("quest_date", startDate)
+    .lte("quest_date", endDate)
+    .order("quest_date", { ascending: false });
     
   if (error) throw error;
   return data;
@@ -31,18 +106,21 @@ export const getPlayerStats = async (request: Request, userId: string) => {
   return data;
 };
 
-// Get today's quest summary
+// Get today's summary
 export const getTodayQuestSummary = async (request: Request) => {
   const { client } = makeSSRClient(request);
   const { data: { user } } = await client.auth.getUser();
   
   if (!user) throw new Error("Unauthorized");
   
+  // Use current date in local timezone
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  
   const { data, error } = await client
     .from("quest_daily_summary_view")
     .select("*")
     .eq("profile_id", user.id)
-    .eq("quest_date", new Date().toISOString().split('T')[0])
+    .eq("quest_date", today)
     .single();
     
   if (error) throw error;
@@ -61,13 +139,13 @@ export const createQuest = async (request: Request, questData: {
   if (!user) throw new Error("Unauthorized");
   
   const difficultyRewards = {
-    easy: { xp: 10, bricks: 1 },
-    medium: { xp: 20, bricks: 1 },
-    hard: { xp: 35, bricks: 2 }
+    easy: { xp: 10, bricks: 0 },    // 쉬운 퀘스트 = 0 브릭 (일일 완료 보상만)
+    medium: { xp: 20, bricks: 0 },  // 보통 퀘스트 = 0 브릭 (일일 완료 보상만)
+    hard: { xp: 35, bricks: 0 }     // 어려운 퀘스트 = 0 브릭 (일일 완료 보상만)
   };
   
   const reward = difficultyRewards[questData.difficulty];
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
   const deadline = new Date();
   deadline.setHours(23, 59, 59, 999);
   
@@ -119,7 +197,7 @@ export const confirmQuests = async (request: Request) => {
   
   if (!user) throw new Error("Unauthorized");
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
   
   const { error } = await client
     .from("daily_quests")
