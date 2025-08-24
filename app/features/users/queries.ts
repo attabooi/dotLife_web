@@ -72,4 +72,41 @@ export const getLoggedInUserId = async (client: SupabaseClient<Database>) => {
   return data.user.id;
 };
 
+export const updateUserProfile = async (
+  client: SupabaseClient<Database>,
+  {
+    id,
+    name,
+    username,
+    avatar,
+  }: {
+    id: string;
+    name: string;
+    username: string;
+    avatar?: string | null;
+  }
+) => {
+  const updateData: any = {
+    name,
+    username,
+    updated_at: new Date().toISOString(),
+  };
+  
+  if (avatar !== undefined) {
+    updateData.avatar = avatar;
+  }
+  
+  const { data, error } = await client
+    .from("profiles")
+    .update(updateData)
+    .eq("profile_id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
 

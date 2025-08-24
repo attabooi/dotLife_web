@@ -24,12 +24,24 @@ export default function HomePage() {
   return (
     <>
       <div className="flex h-[600px] w-full flex-col items-center justify-center overflow-hidden rounded-lg  bg-background ">
-        <span className="pointer-events-none z-10 whitespace-pre-wrap text-center text-7xl font-semibold leading-none">
-          Visualize Your Discipline
-          <h1 className="mt-4 text-xl text-muted-foreground text-center max-w-xl mx-auto">
+        <div className="relative z-10 flex flex-col items-center space-y-6 text-center">
+          <span className="pointer-events-none whitespace-pre-wrap text-center text-7xl font-semibold leading-none">
+            Visualize Your Discipline
+          </span>
+          <h1 className="pointer-events-none mt-4 text-xl text-muted-foreground text-center max-w-xl mx-auto">
           Complete Your Daily Quests. Build Your Tower.
           </h1>
-        </span>
+          <p className="pointer-events-none mt-6 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+            Build your daily habits into a tower! Every small habit you complete adds a block to your growing tower of discipline.
+          </p>
+          <div className="mt-6">
+            <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3">
+              <Link to="/quests">
+                Start Building
+              </Link>
+            </Button>
+          </div>
+        </div>
         <Particles
           className="absolute inset-0 z-0"
           quantity={200}
@@ -39,6 +51,7 @@ export default function HomePage() {
           refresh
         />
       </div>
+      
       {/* <main className="relative px-20 space-y-40">
         <div className="grid grid-cols-3 gap-4">
           <div>

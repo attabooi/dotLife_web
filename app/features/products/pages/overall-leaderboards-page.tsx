@@ -1,138 +1,46 @@
-import { DateTime } from "luxon";
-import type { Route } from "./+types/daily-leaderboards-page";
-import { data, isRouteErrorResponse, Link } from "react-router";
-import { z } from "zod";
+import type { Route } from "./+types/overall-leaderboards-page";
+import { data, isRouteErrorResponse } from "react-router";
 import { HeroSection } from "~/common/components/hero-section";
-import { Button } from "~/common/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/common/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "~/common/components/ui/avatar";
 import { Badge } from "~/common/components/ui/badge";
-import { getDailyLeaderboard } from "../queries";
-import { makeSSRClient } from "~/supa-client";
+import { getOverallLeaderboard } from "../queries";
 
-const paramsSchema = z.object({
-  year: z.coerce.number(),
-  month: z.coerce.number(),
-  day: z.coerce.number(),
-});
-
-
-export const meta: Route.MetaFunction = ({ params }) => {
-  const date = DateTime.fromObject(
-    {
-      year: Number(params.year),
-      month: Number(params.month),
-      day: Number(params.day),
-    }
-  ).setZone("Asia/Seoul").setLocale("ko");
+export const meta: Route.MetaFunction = () => {
   return [
-    {
-      title: `The best of ${date.toLocaleString(DateTime.DATE_MED)} | dotLife`,
-    },
+    { title: "Overall Leaderboard | dotLife" },
     {
       name: "description",
-      content: "",
+      content: "Check out the overall leaderboard to see who has built the most impressive towers!",
     },
   ];
 };
 
-
-export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const { success, data: parsedData } = paramsSchema.safeParse(params);
-
-  if (!success) {
-    throw data(
-      {
-        error_code: "INVALID_PARAMS",
-        message: "Invalid params",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-  const date = DateTime.fromObject(parsedData).setZone("Asia/Seoul");
-  if (!date.isValid) {
-    throw data(
-      {
-        error_code: "INVALID_DATE",
-        message: "Invalid date",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  const today = DateTime.now().setZone("Asia/Seoul").startOf("day");
-  if (date > today) {
-    throw data(
-      {
-        error_code: "FUTURE_DATE",
-        message: "Future date",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-
+export const loader = async ({ request }: Route.LoaderArgs) => {
   try {
-    // 실제 랭킹 데이터 가져오기
-    const rankings = await getDailyLeaderboard(
-      request, 
-      parsedData.year, 
-      parsedData.month, 
-      parsedData.day
-    );
+    // 전체 랭킹 데이터 가져오기 (상위 100명)
+    const rankings = await getOverallLeaderboard(request, 100);
 
     return {
-      ...parsedData,
       rankings,
     };
   } catch (error) {
-    console.error("Error loading daily leaderboard:", error);
+    console.error("Error loading overall leaderboard:", error);
     return {
-      ...parsedData,
       rankings: [],
     };
   }
 };
 
-export default function DailyLeaderboardsPage({
+export default function OverallLeaderboardsPage({
   loaderData,
 }: Route.ComponentProps) {
-  const urlDate = DateTime.fromObject({
-    year: loaderData.year,
-    month: loaderData.month,
-    day: loaderData.day,
-  }).setZone("Asia/Seoul");
-
-  const previousDay = urlDate.minus({ days: 1});
-  const nextDay = urlDate.plus({ days: 1});
-  const isToday = urlDate.equals(DateTime.now().startOf("day"));
-
   return (
     <div className="space-y-8">
       <HeroSection  
-        title={`The best of ${urlDate.toLocaleString(DateTime.DATE_MED)}`}
-        description="Check out the daily leaderboard to see who's the top performer today!"
+        title="🏆 Overall Leaderboard"
+        description="Check out the overall leaderboard to see who has built the most impressive towers!"
       />
-
-      <div className="flex justify-center gap-2">
-        <Button variant="secondary" asChild>
-          <Link to={`/products/leaderboards/daily/${previousDay.year}/${previousDay.month}/${previousDay.day}`}>
-            &larr; {previousDay.toLocaleString(DateTime.DATE_SHORT)}
-          </Link>
-        </Button>
-        {!isToday && (
-          <Button variant="secondary" asChild>
-            <Link to={`/products/leaderboards/daily/${nextDay.year}/${nextDay.month}/${nextDay.day}`}>
-              {nextDay.toLocaleString(DateTime.DATE_SHORT)} &rarr;
-            </Link>
-          </Button>
-        )}
-      </div>
 
       <div className="space-y-4 w-full max-w-4xl mx-auto">
         {loaderData.rankings.length > 0 ? (
@@ -172,6 +80,10 @@ export default function DailyLeaderboardsPage({
                         <div className="text-sm text-gray-500">
                           @{player.username || 'user'}
                         </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary">Level {player.level}</Badge>
+                          <Badge variant="outline">{player.consecutive_days} days</Badge>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -179,22 +91,22 @@ export default function DailyLeaderboardsPage({
                   {/* 통계 */}
                   <div className="flex items-center gap-6">
                     <div className="text-center">
-                      <div className="text-lg font-bold text-blue-600">
-                        {player.total_xp}
-                      </div>
-                      <div className="text-xs text-gray-500">XP</div>
-                    </div>
-                    <div className="text-center">
                       <div className="text-lg font-bold text-green-600">
                         {player.total_bricks}
                       </div>
-                      <div className="text-xs text-gray-500">Bricks</div>
+                      <div className="text-xs text-gray-500">Total Bricks</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-blue-600">
+                        {player.total_xp}
+                      </div>
+                      <div className="text-xs text-gray-500">Total XP</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg font-bold text-purple-600">
-                        {player.quests_completed}
+                        {player.consecutive_days}
                       </div>
-                      <div className="text-xs text-gray-500">Quests</div>
+                      <div className="text-xs text-gray-500">Streak</div>
                     </div>
                   </div>
                 </div>
@@ -204,12 +116,12 @@ export default function DailyLeaderboardsPage({
         ) : (
           <Card className="text-center py-12">
             <CardContent>
-              <div className="text-4xl mb-4">📊</div>
+              <div className="text-4xl mb-4">🏗️</div>
               <div className="text-xl font-semibold mb-2">No Rankings Yet</div>
               <div className="text-gray-500">
-                No one has completed quests on {urlDate.toLocaleString(DateTime.DATE_MED)} yet.
+                No one has built towers yet.
                 <br />
-                Be the first to complete today's quests!
+                Start building your tower to appear on the leaderboard!
               </div>
             </CardContent>
           </Card>

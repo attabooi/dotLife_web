@@ -29,6 +29,8 @@ import {
   DropdownMenuSeparator,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { PixelLogoCompact } from "./ui/pixel-logo";
+import { PixelLogoText } from "./ui/pixel-logo";
 
 const menus = [
   {
@@ -64,9 +66,14 @@ export default function Navigation({
   return (
     <nav className="flex px-20 h-16 items-center justify-between backrop-blur fixed top-0 left-0 right-0 z-50 bg-background/50">
       <div className="flex items-center gap-2">
-        <Link to="/" className="font-bold tracking-tighter text-lg">
-          dotLife
+        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <img src="/dotLife_logo.svg" alt="dotLife" className="h-8 w-auto" />
+          <span className="font-bold tracking-tighter text-lg">dotLife</span>
+          {/* <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <PixelLogoCompact size="md" />
+          <PixelLogoText size="md" /> */}
         </Link>
+        
         <Separator orientation="vertical" className="h-6 mx-4" />
         <NavigationMenu>
           <NavigationMenuList>
@@ -121,7 +128,8 @@ export default function Navigation({
       </div>
       {isLoggedIn ? (
         <div className="flex items-center gap-2">
-          <Button size="icon" variant="ghost" asChild className="relative">
+          {/* 알람과 메시지 버튼 숨김 */}
+          {/* <Button size="icon" variant="ghost" asChild className="relative">
             <Link to="/my/notifications">
               <BellIcon className="size-4" />
               {hasNotifications && (
@@ -136,7 +144,7 @@ export default function Navigation({
                 <div className="absolute right-1.5 top-1.5 rounded-full size-2 bg-red-500 text-xs w-2 h-2" />
               )}
             </Link>
-          </Button>
+          </Button> */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar>
@@ -156,24 +164,25 @@ export default function Navigation({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem asChild className="cursor-pointer">
+                {/* Dashboard와 Settings 메뉴 숨김 */}
+                {/* <DropdownMenuItem asChild className="cursor-pointer">
                   <Link to="/my/dashboard">
                     <BarChart3 className="size-4 mr-2" />
                     Dashboard
                   </Link>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link to="/my/profile">
+                  <Link to={`/users/${username}`}>
                     <UserIcon className="size-4 mr-2" />
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer">
+                {/* <DropdownMenuItem asChild className="cursor-pointer">
                   <Link to="/my/settings">
                     <SettingsIcon className="size-4 mr-2" />
                     Settings
                   </Link>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="cursor-pointer">

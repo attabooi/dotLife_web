@@ -78,13 +78,13 @@ begin
             xp_to_next_level = new_xp_to_next,
             total_xp = total_xp + new.reward_xp,
             consecutive_days = new_consecutive_days,
-            total_bricks = total_bricks + new.reward_bricks,
-            available_bricks = available_bricks + new.reward_bricks,
+            total_bricks = total_bricks + bricks_earned,
+            available_bricks = available_bricks + bricks_earned,
             last_completed_date = today_date
         where profile_id = new.profile_id;
         
-        -- Update hearts based on today's completion rate
-        perform update_player_hearts(new.profile_id, new.quest_date);
+                    -- Update hearts based on today's completion rate
+            -- perform update_player_hearts(new.profile_id, new.quest_date);
     end if;
     
     return new;

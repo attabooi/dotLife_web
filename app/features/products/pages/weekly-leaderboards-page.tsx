@@ -3,9 +3,11 @@ import type { Route } from "./+types/weekly-leaderboards-page";
 import { data, isRouteErrorResponse, Link } from "react-router";
 import { z } from "zod";
 import { HeroSection } from "~/common/components/hero-section";
-import { ProductCard } from "../components/product-card";
 import { Button } from "~/common/components/ui/button";
-import ProductPagination from "~/common/components/product-pagination";
+import { Card, CardContent, CardHeader, CardTitle } from "~/common/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "~/common/components/ui/avatar";
+import { Badge } from "~/common/components/ui/badge";
+import { getWeeklyLeaderboard } from "../queries";
 
 const paramsSchema = z.object({
   year: z.coerce.number(),
@@ -32,7 +34,7 @@ const meta: Route.MetaFunction = ({ params }) => {
   ];
 };
 
-export const loader = ({ params }: Route.LoaderArgs) => {
+export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { success, data: parsedData } = paramsSchema.safeParse(params);
 
   if (!success) {
@@ -75,9 +77,25 @@ export const loader = ({ params }: Route.LoaderArgs) => {
     );
   }
 
-  return {
-    ...parsedData,
-  };
+  try {
+    // 실제 주간 랭킹 데이터 가져오기
+    const rankings = await getWeeklyLeaderboard(
+      request, 
+      parsedData.year, 
+      parsedData.week
+    );
+
+    return {
+      ...parsedData,
+      rankings,
+    };
+  } catch (error) {
+    console.error("Error loading weekly leaderboard:", error);
+    return {
+      ...parsedData,
+      rankings: [],
+    };
+  }
 };
 
 export default function WeeklyLeaderboardsPage({
@@ -122,20 +140,87 @@ export default function WeeklyLeaderboardsPage({
         ) : null}
       </div>
 
-      <div className="space-y-5 w-full max-w-screen-md mx-auto">
-        {Array.from({ length: 11 }).map((_, index) => (
-          <ProductCard
-            key={`product-${index}`}
-            id={`product-${index}`}
-            name="Product Name"
-            description="Product Description"
-            commentsCount={12}
-            viewsCount={12}
-            votesCount={120}
-          />
-        ))}
+      <div className="space-y-4 w-full max-w-4xl mx-auto">
+        {loaderData.rankings.length > 0 ? (
+          loaderData.rankings.map((player: any, index: number) => (
+            <Card key={player.profile_id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {/* 랭킹 */}
+                    <div className="flex flex-col items-center min-w-[60px]">
+                      <div className={`text-2xl font-bold ${
+                        index === 0 ? 'text-yellow-500' : 
+                        index === 1 ? 'text-gray-400' : 
+                        index === 2 ? 'text-amber-600' : 'text-gray-600'
+                      }`}>
+                        #{player.rank}
+                      </div>
+                      {index < 3 && (
+                        <div className="text-xs text-gray-500">
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 프로필 */}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={player.avatar} alt={player.name} />
+                        <AvatarFallback>
+                          {player.name?.charAt(0) || player.username?.charAt(0) || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-semibold text-lg">
+                          {player.name || player.username || 'Anonymous'}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          @{player.username || 'user'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 통계 */}
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-blue-600">
+                        {player.total_xp}
+                      </div>
+                      <div className="text-xs text-gray-500">XP</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-green-600">
+                        {player.total_bricks}
+                      </div>
+                      <div className="text-xs text-gray-500">Bricks</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-purple-600">
+                        {player.quests_completed}
+                      </div>
+                      <div className="text-xs text-gray-500">Quests</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="text-4xl mb-4">📊</div>
+              <div className="text-xl font-semibold mb-2">No Rankings Yet</div>
+              <div className="text-gray-500">
+                No one has completed quests this week yet.
+                <br />
+                Be the first to complete this week's quests!
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-      <ProductPagination totalPages={10} currentPage={1} />
     </div>
   );
 }

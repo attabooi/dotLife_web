@@ -139,9 +139,9 @@ export const createQuest = async (request: Request, questData: {
   if (!user) throw new Error("Unauthorized");
   
   const difficultyRewards = {
-    easy: { xp: 10, bricks: 0 },    // 쉬운 퀘스트 = 0 브릭 (일일 완료 보상만)
-    medium: { xp: 20, bricks: 0 },  // 보통 퀘스트 = 0 브릭 (일일 완료 보상만)
-    hard: { xp: 35, bricks: 0 }     // 어려운 퀘스트 = 0 브릭 (일일 완료 보상만)
+    easy: { xp: 10, bricks: 1 },    // 쉬운 퀘스트 = 1 브릭
+    medium: { xp: 20, bricks: 2 },  // 보통 퀘스트 = 2 브릭
+    hard: { xp: 35, bricks: 3 }     // 어려운 퀘스트 = 3 브릭
   };
   
   const reward = difficultyRewards[questData.difficulty];

@@ -8,6 +8,7 @@ import {
 
 export default [
   index("common/pages/home-page.tsx"),
+  route("logo-showcase", "common/components/logo-showcase.tsx"),
   ...prefix("products", [
     index("features/products/pages/products-page.tsx"),
     ...prefix("categories", [
@@ -17,6 +18,7 @@ export default [
     route("search", "features/products/pages/search-page.tsx"),
     route("submit", "features/products/pages/submit-page.tsx"),
     route("promote", "features/products/pages/promote-page.tsx"),
+    route("/promote/success", "features/products/pages/payment-success-page.tsx"),
     ...prefix("/:productId", [
       index("features/products/pages/product-redirect-page.tsx"),
       layout("features/products/layouts/product-overview-layout.tsx", [
