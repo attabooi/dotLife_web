@@ -1,16 +1,27 @@
 // =============================================
 // QUEST SYSTEM CONSTANTS
 // =============================================
+// app/features/jobs/constants.tsx
 export const JOB_TYPES = [
-  {
-    label: "Full-time",
-    value: "full-time",
-  },
-  {
-    label: "Part-time",
-    value: "part-time",
-  },
-] as const;
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Freelance",
+];
+
+export const LOCATION_TYPES = [
+  "Remote",
+  "On-site",
+  "Hybrid",
+];
+
+export const SALARY_TYPES = [
+  "Hourly",
+  "Monthly",
+  "Yearly",
+];
+
 
 export const QUEST_DIFFICULTIES = [
   {
