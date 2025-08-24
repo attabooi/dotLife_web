@@ -276,9 +276,21 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                         {playerStats.current_xp}/{playerStats.xp_to_next_level}
                       </span>
                     </div>
+                    
+                    {/* Level Up Notification */}
+                    {playerStats.current_xp >= playerStats.xp_to_next_level && (
+                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm font-bold px-3 py-2 rounded-lg text-center animate-pulse">
+                        🎉 LEVEL UP AVAILABLE! 🎉
+                      </div>
+                    )}
+                    
                     <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                       <div
-                        className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500 ease-out rounded-full"
+                        className={`h-full transition-all duration-500 ease-out rounded-full ${
+                          playerStats.current_xp >= playerStats.xp_to_next_level
+                            ? "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 animate-pulse"
+                            : "bg-gradient-to-r from-yellow-400 to-orange-500"
+                        }`}
                         style={{
                           width: `${
                             (playerStats.current_xp /

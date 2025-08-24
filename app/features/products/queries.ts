@@ -980,7 +980,7 @@ export async function getOverallLeaderboard(request: Request, limit: number = 50
   
   try {
     const { data: rankings, error } = await client
-      .from("player_stats")
+      .from("leaderboard_view")
       .select(`
         profile_id,
         level,

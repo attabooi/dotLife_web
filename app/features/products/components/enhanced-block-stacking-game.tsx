@@ -40,6 +40,18 @@ interface Quest {
   reward: number;
 }
 
+interface CalendarQuest {
+  quest_id: number;
+  title: string;
+  description: string;
+  difficulty: string;
+  completed: boolean;
+  confirmed: boolean;
+  quest_date: string;
+  reward_xp: number;
+  reward_bricks: number;
+}
+
 interface CalendarEvent {
   event_id: number;
   event_date: string;
@@ -48,6 +60,7 @@ interface CalendarEvent {
   blocks_added: number;
   colors_used: string[];
   total_height: number;
+  all_quests?: CalendarQuest[]; // Added for new logic
 }
 
 interface DailyHistory {
@@ -472,19 +485,30 @@ export default function EnhancedBlockStackingGame({
     
     if (!dayData) return 'none';
     
-    // 퀘스트가 있고 블록이 추가되었으면 'perfect'
-    if (dayData.quest_title && dayData.blocks_added > 0) {
+    // all_quests 배열을 사용해서 정확한 퀘스트 완료 상태 확인
+    const allQuests = dayData.all_quests || [];
+    const totalQuests = allQuests.length;
+    const completedQuests = allQuests.filter(quest => quest.completed).length;
+    
+    // 퀘스트가 없는 경우
+    if (totalQuests === 0) {
+      // 블록이 추가되었으면 'partial' (수동 배치)
+      if (dayData.blocks_added > 0) {
+        return 'partial';
+      }
+      return 'none';
+    }
+    
+    // 퀘스트가 있는 경우
+    if (completedQuests === totalQuests && totalQuests > 0) {
+      // 모든 퀘스트 완료
       return 'perfect';
-    }
-    
-    // 퀘스트가 있지만 블록이 추가되지 않았으면 'failed'
-    if (dayData.quest_title && dayData.blocks_added === 0) {
-      return 'failed';
-    }
-    
-    // 퀘스트는 없지만 블록이 추가되었으면 'partial' (예: 수동 배치)
-    if (!dayData.quest_title && dayData.blocks_added > 0) {
+    } else if (completedQuests > 0 && completedQuests < totalQuests) {
+      // 일부 퀘스트만 완료
       return 'partial';
+    } else if (completedQuests === 0 && totalQuests > 0) {
+      // 퀘스트가 있지만 하나도 완료하지 않음
+      return 'failed';
     }
     
     return 'none';
@@ -727,9 +751,9 @@ export default function EnhancedBlockStackingGame({
               
               return (
                 <div className="mt-2 text-xs text-gray-400">
-                  <div>Date: {format(selectedDate, 'yyyy-MM-dd')}</div>
+                  {/* <div>Date: {format(selectedDate, 'yyyy-MM-dd')}</div> */}
                   <div>Status: {questInfo?.status}</div>
-                  <div>Blocks: {questInfo?.blocksAdded} </div>
+                  {/* <div>Blocks: {questInfo?.blocksAdded} </div> */}
                     <div className="font-medium">Quests:</div>
                     {questList.length > 0 ? (
                       questList.map((quest, index) => (

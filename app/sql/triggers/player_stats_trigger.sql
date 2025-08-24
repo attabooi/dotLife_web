@@ -103,9 +103,37 @@ declare
   v_yesterday date;
   v_all_completed_today boolean;
 begin
-  -- Only process when quest is marked as completed
+  -- Only process when quest is marked as completed AND was not already completed
   if new.completed = true and (old.completed = false or old.completed is null) then
     v_today := current_date;
+    
+    -- 추가 검증: 이미 완료된 퀘스트인지 확인
+    if old.completed = true then
+      perform public.log_debug(
+        new.profile_id,
+        'Quest completion trigger - ALREADY COMPLETED',
+        jsonb_build_object(
+          'quest_id', new.quest_id,
+          'old_completed', old.completed,
+          'new_completed', new.completed,
+          'skip_reason', 'quest_already_completed'
+        )
+      );
+      return new;
+    end if;
+    
+    -- 디버깅: 중복 실행 방지 로그
+    perform public.log_debug(
+      new.profile_id,
+      'Quest completion trigger - START',
+      jsonb_build_object(
+        'quest_id', new.quest_id,
+        'old_completed', old.completed,
+        'new_completed', new.completed,
+        'trigger_time', now(),
+        'quest_title', new.title
+      )
+    );
     
     -- Get current player stats
     select current_xp, level into v_old_xp, v_new_level
@@ -178,6 +206,48 @@ begin
     
     -- Update hearts based on today's completion rate
     perform public.update_player_hearts(new.profile_id, v_today);
+    
+    -- 디버깅: 트리거 완료 로그
+    perform public.log_debug(
+      new.profile_id,
+      'Quest completion trigger - COMPLETED',
+      jsonb_build_object(
+        'quest_id', new.quest_id,
+        'new_xp', v_new_xp,
+        'new_level', v_new_level,
+        'consecutive_days_updated', case 
+          when exists (select 1 from public.player_stats where profile_id = new.profile_id and last_completed_date = v_yesterday) 
+          then 'incremented' 
+          else 'reset_to_1' 
+        end,
+        'bricks_awarded', case 
+          when v_all_completed_today then
+            case
+              when (select consecutive_days from public.player_stats where profile_id = new.profile_id) >= 30 then 6
+              when (select consecutive_days from public.player_stats where profile_id = new.profile_id) >= 20 then 5
+              when (select consecutive_days from public.player_stats where profile_id = new.profile_id) >= 10 then 4
+              else 3
+            end
+          else 0
+        end
+      )
+    );
+  else
+    -- 디버깅: 트리거가 실행되지 않은 이유
+    perform public.log_debug(
+      new.profile_id,
+      'Quest completion trigger - SKIPPED',
+      jsonb_build_object(
+        'quest_id', new.quest_id,
+        'old_completed', old.completed,
+        'new_completed', new.completed,
+        'skip_reason', case 
+          when new.completed = false then 'quest_not_completed'
+          when old.completed = true then 'quest_already_completed'
+          else 'unknown'
+        end
+      )
+    );
   end if;
   
   return new;

@@ -8,3 +8,14 @@ export async function getRankings(client: SupabaseClient) {
     if (error) throw error;
     return data ?? [];
   }
+
+
+export async function getLeaderboard(client: SupabaseClient) {
+  const { data: rankings } = await client
+    .from("leaderboard_view")
+    .select("*")
+    .order("total_bricks", { ascending: false })
+    .limit(50);
+
+  return rankings ?? [];
+}
