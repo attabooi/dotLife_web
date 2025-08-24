@@ -1,6 +1,16 @@
 // =============================================
 // QUEST SYSTEM CONSTANTS
 // =============================================
+export const JOB_TYPES = [
+  {
+    label: "Full-time",
+    value: "full-time",
+  },
+  {
+    label: "Part-time",
+    value: "part-time",
+  },
+] as const;
 
 export const QUEST_DIFFICULTIES = [
   {
