@@ -13,7 +13,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     return redirect("/auth/login");
   }
   const { provider } = data;
-  const redirectTo = `http://localhost:5173/auth/social/${provider}/complete`;
+  const redirectTo = `http://dotlife.app/auth/social/${provider}/complete`;
   const { client, headers } = makeSSRClient(request);
   const {
     data: { url },
