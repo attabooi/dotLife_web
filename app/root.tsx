@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <meta property="og:title" content="dotLife | Build Your Tower" />
   <meta property="og:description" content="Complete your daily quests and visualize your discipline with dotLife." />
-  <meta property="og:image" content="https://dotlife.app/dotLife_logo3.png" />
+  <meta property="og:image" content="https://dotlife.app/logo.png" />
   <meta property="og:url" content="https://dotlife.app/" />
   <meta property="og:type" content="website" />
 
