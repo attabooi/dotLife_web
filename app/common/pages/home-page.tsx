@@ -36,7 +36,7 @@ export const meta: MetaFunction = () => {
     },
     {
       property: "og:url",
-      content: "https://www.dotlife.app/",
+      content: "https://dotlife-five.vercel.app/",
     },
     {
       property: "og:title",
@@ -48,7 +48,7 @@ export const meta: MetaFunction = () => {
     },
     {
       property: "og:image",
-      content: "https://www.dotlife.app/dotLife_logo4.png",
+      content: "https://dotlife-five.vercel.app/dotLife_logo4.png",
     },
     {
       property: "og:image:width",
@@ -69,7 +69,7 @@ export const meta: MetaFunction = () => {
     },
     {
       name: "twitter:url",
-      content: "https://www.dotlife.app/",
+      content: "https://dotlife-five.vercel.app/",
     },
     {
       name: "twitter:title",
@@ -81,7 +81,7 @@ export const meta: MetaFunction = () => {
     },
     {
       name: "twitter:image",
-      content: "https://www.dotlife.app/dotLife_og_image.png",
+      content: "https://dotlife-five.vercel.app/dotLife_logo4.png",
     },
     // Additional meta tags
     {
