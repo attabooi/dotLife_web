@@ -12,10 +12,85 @@ import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Home | dotLife" },
+    { title: "dotLife - Visualize Your Discipline" },
     {
       name: "description",
-      content: "The best products made by our community today.",
+      content: "Build your daily habits into a tower! Complete daily quests and watch your tower of discipline grow. Gamify your productivity with our unique habit-building platform.",
+    },
+    {
+      name: "keywords",
+      content: "productivity, habits, gamification, daily quests, discipline, tower building, habit tracker",
+    },
+    {
+      name: "author",
+      content: "dotLife",
+    },
+    {
+      name: "robots",
+      content: "index, follow",
+    },
+    // Open Graph / Facebook
+    {
+      property: "og:type",
+      content: "website",
+    },
+    {
+      property: "og:url",
+      content: "https://www.dotlife.app/",
+    },
+    {
+      property: "og:title",
+      content: "dotLife - Visualize Your Discipline",
+    },
+    {
+      property: "og:description",
+      content: "Build your daily habits into a tower! Complete daily quests and watch your tower of discipline grow.",
+    },
+    {
+      property: "og:image",
+      content: "https://www.dotlife.app/dotLife_logo4.png",
+    },
+    {
+      property: "og:image:width",
+      content: "1200",
+    },
+    {
+      property: "og:image:height",
+      content: "630",
+    },
+    {
+      property: "og:site_name",
+      content: "dotLife",
+    },
+    // Twitter
+    {
+      name: "twitter:card",
+      content: "summary_large_image",
+    },
+    {
+      name: "twitter:url",
+      content: "https://www.dotlife.app/",
+    },
+    {
+      name: "twitter:title",
+      content: "dotLife - Visualize Your Discipline",
+    },
+    {
+      name: "twitter:description",
+      content: "Build your daily habits into a tower! Complete daily quests and watch your tower of discipline grow.",
+    },
+    {
+      name: "twitter:image",
+      content: "https://www.dotlife.app/dotLife_og_image.png",
+    },
+    // Additional meta tags
+    {
+      name: "theme-color",
+      content: "#FFA81E",
+    },
+    {
+      name: "msapplication-TileColor",
+      content: "#FFA81E",
     },
   ];
 };
