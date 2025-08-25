@@ -144,7 +144,18 @@ export const createQuest = async (request: Request, questData: {
     hard: { xp: 35, bricks: 3 }     // 어려운 퀘스트 = 3 브릭
   };
   
+  // Validate difficulty and provide default if invalid
+  if (!questData.difficulty || !difficultyRewards[questData.difficulty]) {
+    console.error('Invalid difficulty:', questData.difficulty);
+    questData.difficulty = 'medium'; // Default to medium
+  }
+  
   const reward = difficultyRewards[questData.difficulty];
+  
+  if (!reward) {
+    throw new Error(`Invalid difficulty level: ${questData.difficulty}`);
+  }
+  
   const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
   const deadline = new Date();
   deadline.setHours(23, 59, 59, 999);

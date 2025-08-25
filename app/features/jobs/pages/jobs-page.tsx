@@ -384,6 +384,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
               <CardContent className="space-y-6">
                 <form method="post" className="space-y-6">
                   <input type="hidden" name="action" value="create" />
+                  <input type="hidden" name="difficulty" value={selectedDifficulty} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                       name="title"
@@ -402,7 +403,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                       required
                     />
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-4">
                     <div className="flex gap-2">
                       {(["easy", "medium", "hard"] as const).map(
                         (difficulty) => (
@@ -430,7 +431,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                     <Button
                       type="submit"
                       disabled={!newQuestTitle || !newQuestDescription}
-                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                      className="bg-orange-500 hover:bg-orange-600 text-white w-full"
                     >
                       Create Quest
                     </Button>

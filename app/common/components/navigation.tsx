@@ -89,7 +89,7 @@ export default function Navigation({
       </div>
 
       {/* Right Section - Profile */}
-      <div className="flex px-10 items-center justify-end flex-shrink-0">
+      <div className="flex px-0 items-center justify-end flex-shrink-0">
         {isLoggedIn ? (
           <div className="flex items-center gap-2">
             <DropdownMenu>
