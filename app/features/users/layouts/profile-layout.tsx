@@ -233,12 +233,12 @@ export default function ProfileLayout({ loaderData }: Route.ComponentProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold">{user.name}</h1>
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-xs font-normal">
               Level {playerStats.level}
             </Badge>
             {isOwnProfile && (
               <Link to="/my/settings">
-                <Button variant="outline">Edit Profile</Button>
+                <Button variant="outline" className="text-xs font-normal h-6 px-2 py-1">Edit Profile</Button>
               </Link>
             )}
           </div>

@@ -36,22 +36,22 @@ export default function OverallLeaderboardsPage({
   loaderData,
 }: Route.ComponentProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <HeroSection  
         title="🏆 Overall Leaderboard"
         description="Check out the overall leaderboard to see who has built the most impressive towers!"
       />
 
-      <div className="space-y-4 w-full max-w-4xl mx-auto">
+      <div className="space-y-4 w-full max-w-4xl mx-auto px-4 md:px-6">
         {loaderData.rankings.length > 0 ? (
           loaderData.rankings.map((player: any, index: number) => (
             <Card key={player.profile_id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex items-center gap-3 md:gap-4">
                     {/* 랭킹 */}
-                    <div className="flex flex-col items-center min-w-[60px]">
-                      <div className={`text-2xl font-bold ${
+                    <div className="flex flex-col items-center min-w-[50px] md:min-w-[60px]">
+                      <div className={`text-xl md:text-2xl font-bold ${
                         index === 0 ? 'text-yellow-500' : 
                         index === 1 ? 'text-gray-400' : 
                         index === 2 ? 'text-amber-600' : 'text-gray-600'
@@ -66,38 +66,38 @@ export default function OverallLeaderboardsPage({
                     </div>
 
                     {/* 프로필 */}
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <Avatar className="h-10 w-10 md:h-12 md:w-12">
                         <AvatarImage src={player.avatar} alt={player.name} />
                         <AvatarFallback>
                           {player.name?.charAt(0) || player.username?.charAt(0) || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-semibold text-lg">
+                        <div className="font-semibold text-base md:text-lg">
                           {player.name || player.username || 'Anonymous'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs md:text-sm text-gray-500">
                           @{player.username || 'user'}
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary">Level {player.level}</Badge>
-                          <Badge variant="outline">{player.consecutive_days} days</Badge>
+                        <div className="flex flex-wrap items-center gap-1 md:gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">Level {player.level}</Badge>
+                          <Badge variant="outline" className="text-xs">{player.consecutive_days} days</Badge>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* 통계 */}
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-4 md:gap-6">
                     <div className="text-center">
-                      <div className="text-lg font-bold text-green-600">
+                      <div className="text-base md:text-lg font-bold text-green-600">
                         {player.total_bricks}
                       </div>
                       <div className="text-xs text-gray-500">Total Bricks</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-bold text-blue-600">
+                      <div className="text-base md:text-lg font-bold text-blue-600">
                         {player.total_xp}
                       </div>
                       <div className="text-xs text-gray-500">Total XP</div>

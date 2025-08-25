@@ -43,7 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body >
-        <main className="px-20">{children}</main>
+        <main className="">{children}</main>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -59,8 +59,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   } = await client.auth.getUser();
   
   if (user) {
-    const profile = await getUserById(client, { id: user?.id });
-    return { user, profile };
+    try {
+      const profile = await getUserById(client, { id: user?.id });
+      return { user, profile };
+    } catch (error) {
+      // Return user without profile if profile fetch fails
+      return { user, profile: null };
+    }
   }
   return { user: null, profile: null };
 };
@@ -71,7 +76,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   const isLoading = navigation.state === "loading";
   const isLoggedIn = loaderData.user !== null;
   return (
-    <div className={pathname.includes("/auth/") ? "" : "py-28 px-5 lg:px-20"}>
+    <div className={pathname.includes("/auth/") ? "" : "pt-16 pb-4 px-0 lg:px-20"}>
       {pathname.includes("/auth") ? null : (
         <Navigation
           isLoggedIn={isLoggedIn}

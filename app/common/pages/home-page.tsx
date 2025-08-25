@@ -23,19 +23,19 @@ export const meta: MetaFunction = () => {
 export default function HomePage() {
   return (
     <>
-      <div className="flex h-[600px] w-full flex-col items-center justify-center overflow-hidden rounded-lg  bg-background ">
-        <div className="relative z-10 flex flex-col items-center space-y-6 text-center">
-          <span className="pointer-events-none whitespace-pre-wrap text-center text-7xl font-semibold leading-none">
+      <div className="flex min-h-[600px] md:h-[600px] w-full flex-col items-center justify-center overflow-hidden rounded-lg bg-background px-4 md:px-0">
+        <div className="relative z-10 flex flex-col items-center space-y-4 md:space-y-6 text-center">
+          <span className="pointer-events-none whitespace-pre-wrap text-center text-3xl md:text-5xl lg:text-7xl font-semibold leading-tight px-4">
             Visualize Your Discipline
           </span>
-          <h1 className="pointer-events-none mt-4 text-xl text-muted-foreground text-center max-w-xl mx-auto">
-          Complete Your Daily Quests. Build Your Tower.
+          <h1 className="pointer-events-none mt-2 md:mt-4 text-lg md:text-xl text-muted-foreground text-center max-w-xl mx-auto px-4">
+            Complete Your Daily Quests. Build Your Tower.
           </h1>
-          <p className="pointer-events-none mt-6 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+          <p className="pointer-events-none mt-4 md:mt-6 text-base md:text-lg text-muted-foreground text-center max-w-2xl mx-auto px-4">
             Build your daily habits into a tower! Every small habit you complete adds a block to your growing tower of discipline.
           </p>
-          <div className="mt-6">
-            <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3">
+          <div className="mt-4 md:mt-6">
+            <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white px-6 md:px-8 py-2 md:py-3 text-base md:text-lg">
               <Link to="/quests">
                 Start Building
               </Link>
@@ -44,9 +44,9 @@ export default function HomePage() {
         </div>
         <Particles
           className="absolute inset-0 z-0"
-          quantity={200}
-          size={2}
-          ease={100}
+          quantity={100}
+          size={1}
+          ease={50}
           color={"#FFA81E"}
           refresh
         />

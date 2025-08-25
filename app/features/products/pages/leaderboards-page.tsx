@@ -167,14 +167,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 export default function MyTowerPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <HeroSection
         title="My Tower"
         description="Build your pixel tower and track your quest completion history"
       />
       
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
         <EnhancedBlockStackingGame 
           initialBlocks={loaderData.towerBlocks}
           totalBlocks={loaderData.totalBlocks}

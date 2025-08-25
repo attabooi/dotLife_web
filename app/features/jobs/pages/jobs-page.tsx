@@ -177,9 +177,9 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
 
   // Difficulty settings
   const difficultySettings = {
-    easy: { reward: 10, color: "bg-green-500" },
-    medium: { reward: 20, color: "bg-yellow-500" },
-    hard: { reward: 35, color: "bg-red-500" },
+    easy: { reward: 10, color: "bg-green-500", label: "Easy", xp: 10 },
+    medium: { reward: 20, color: "bg-yellow-500", label: "Medium", xp: 20 },
+    hard: { reward: 35, color: "bg-red-500", label: "Hard", xp: 35 },
   };
 
   // Heart display component
@@ -223,30 +223,30 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
+      <div className="w-full px-0 pt-16 pb-4 md:pt-20 md:pb-8">
         <HeroSection
           title={`Daily Quests - ${todayFormatted}`}
           description="Complete quests to build your tower and level up!"
         />
 
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8 px-4 md:px-6 max-w-6xl mx-auto">
           {/* Player Profile & Stats */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-6">
+          <Card className="w-full bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-xl">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
                 {/* Profile Picture */}
-                <div className="w-16 h-16">
+                <div className="w-12 h-12 md:w-16 md:h-16">
                   {userProfile?.avatar ? (
                     // 아바타 이미지가 있을 경우
                     <img
                       src={userProfile.avatar}
                       alt={userProfile.name || "User Avatar"}
-                      className="w-16 h-16 rounded-full border-4 border-white shadow-lg object-cover"
+                      className="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-white shadow-lg object-cover"
                     />
                   ) : (
                     // 아바타 이미지가 없을 경우
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 flex items-center justify-center text-white text-xl font-bold border-4 border-white shadow-lg">
+                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 flex items-center justify-center text-white text-lg md:text-xl font-bold border-4 border-white shadow-lg">
                       {userProfile?.name
                         ? userProfile.name.charAt(0).toUpperCase()
                         : "?"}
@@ -255,12 +255,12 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                 </div>
 
                 {/* Player Info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-3">
-                    <h2 className="text-2xl font-bold text-gray-900">
+                <div className="flex-1 w-full min-w-0">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-3">
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 truncate">
                       {userProfile?.name || "User"}
                     </h2>
-                    <div className="text-xs text-yellow-600 font-bold bg-yellow-100 px-2 py-1 rounded">
+                    <div className="text-xs text-yellow-600 font-bold bg-yellow-100 px-2 py-1 rounded w-fit">
                       Level {playerStats.level}
                     </div>
                   </div>
@@ -279,7 +279,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                     
                     {/* Level Up Notification */}
                     {playerStats.current_xp >= playerStats.xp_to_next_level && (
-                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm font-bold px-3 py-2 rounded-lg text-center animate-pulse">
+                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs md:text-sm font-bold px-3 py-2 rounded-lg text-center animate-pulse">
                         🎉 LEVEL UP AVAILABLE! 🎉
                       </div>
                     )}
@@ -313,7 +313,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                   </div>
 
                   {/* Stats Row */}
-                  <div className="flex items-center gap-4 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs">
                     <div className="text-blue-600 font-bold bg-blue-100 px-2 py-1 rounded">
                       {playerStats.consecutive_days} days
                     </div>
@@ -324,8 +324,8 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                 </div>
 
                 {/* Quest Stats */}
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">
+                <div className="text-right w-full md:w-auto">
+                  <div className="text-2xl md:text-3xl font-bold text-blue-600">
                     {quests.filter((q: any) => !q.completed).length}
                   </div>
                   <div className="text-sm text-gray-600 font-medium">
@@ -336,41 +336,45 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                   </div>
 
                   {/* Quest Progress */}
+                  <div className="flex flex-col items-end gap-2 mt-2">
                   {todaySummary && (
-                    <div className="text-xs text-orange-600 font-bold mt-2 bg-orange-100 px-2 py-1 rounded">
+                    <div className="inline-flex w-fit text-xs text-orange-600 font-bold mt-2 bg-orange-100 px-2 py-1 rounded">
                       {progressString} completed
                     </div>
                   )}
 
                   {/* Bricks Earned */}
                   {todaySummary?.all_completed && (
-                    <div className="text-xs text-orange-600 font-bold mt-2 bg-orange-100 px-2 py-1 rounded">
+                    <div className="inline-flex w-fit text-xs text-orange-600 font-bold mt-2 bg-orange-100 px-2 py-1 rounded">
                       +{todaySummary.earned_bricks_if_perfect} bricks earned
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* System Info */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Info className="w-4 h-4 text-blue-500" />
-              <span className="text-sm font-semibold text-blue-700">
-                Quest System
-              </span>
-            </div>
-            <div className="text-xs text-blue-600 space-y-1">
-              <div>• Complete all quests by midnight to maintain health</div>
-              <div>• Partial completion = 0.5 health loss</div>
-              <div>• No quests completed = 1 health loss</div>
-            </div>
-          </div>
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-lg">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Info className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-semibold text-blue-700">
+                  Quest System
+                </span>
+              </div>
+              <div className="text-xs text-blue-600 space-y-1">
+                <div>• Complete all quests by midnight to maintain health</div>
+                <div>• Partial completion = 0.5 health loss</div>
+                <div>• No quests completed = 1 health loss</div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Add Quest Form (confirm 전만) */}
           {!isConfirmed && (
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-xl">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Plus className="w-5 h-5" />
@@ -418,39 +422,17 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                                 : ""
                             }`}
                           >
-                            {difficulty.charAt(0).toUpperCase() +
-                              difficulty.slice(1)}
+                            {difficultySettings[difficulty].label}
                           </Button>
                         )
                       )}
-                      <input
-                        type="hidden"
-                        name="difficulty"
-                        value={selectedDifficulty}
-                      />
                     </div>
-                    <div className="text-sm text-gray-600 font-medium">
-                      Reward: {difficultySettings[selectedDifficulty].reward} XP
-                    </div>
-                  </div>
-                  <div className="flex gap-2 justify-end">
                     <Button
                       type="submit"
-                      disabled={
-                        !newQuestTitle.trim() || !newQuestDescription.trim()
-                      }
-                      className="h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-white font-semibold"
+                      disabled={!newQuestTitle || !newQuestDescription}
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
                     >
-                      <Plus className="w-5 h-5 mr-2" />
-                      Add Quest
-                    </Button>
-                    <Button
-                      type="button"
-                      className="h-12 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold px-6 py-2 rounded shadow"
-                      onClick={() => setShowConfirmModal(true)}
-                      disabled={quests.length === 0}
-                    >
-                      Confirm Today's Quests
+                      Create Quest
                     </Button>
                   </div>
                 </form>
@@ -458,42 +440,12 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
             </Card>
           )}
 
-          {/* Confirm Modal */}
-          <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm your quests for today?</DialogTitle>
-              </DialogHeader>
-              <div className="text-sm text-gray-600 mb-4">
-                After confirming, you cannot add, edit, or delete quests. Start
-                tracking today's quests?
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowConfirmModal(false)}
-                >
-                  Cancel
-                </Button>
-                <form method="post" className="inline">
-                  <input type="hidden" name="action" value="confirm" />
-                  <Button
-                    type="submit"
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold"
-                  >
-                    Confirm
-                  </Button>
-                </form>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
           {/* Today's Quests */}
-          {quests.length > 0 && (
-            <div className="space-y-6">
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-xl">
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Sword className="w-6 h-6 text-blue-600" />
+                <h2 className="text-xs font-bold text-gray-900 flex items-center gap-2">
+                  <Sword className="w-5 h-5 text-orange-500" />
                   Today's Quests ({quests.length})
                   <Badge variant="outline" className="ml-2 text-xs">
                     {todayFormatted}
@@ -505,7 +457,9 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {quests.map((quest: any) => {
                   const isEditing = editingQuest === quest.quest_id;
                   const isCompleted = quest.completed;
@@ -513,7 +467,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                   return (
                     <Card
                       key={quest.quest_id}
-                      className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ease-out ${
+                      className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ease-out rounded-xl ${
                         isCompleted ? "bg-green-50/80 border-green-200" : ""
                       }`}
                     >
@@ -597,37 +551,47 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                               difficultySettings[
                                 quest.difficulty as keyof typeof difficultySettings
                               ].color
-                            } text-white border-0 px-3 py-1 font-semibold`}
+                            } ml-2`}
                           >
-                            {quest.difficulty}
+                            {difficultySettings[
+                              quest.difficulty as keyof typeof difficultySettings
+                            ].label}
                           </Badge>
                         </div>
                       </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-gray-600 font-bold bg-gray-100 px-2 py-1 rounded">
-                            {quest.hours_remaining}h {quest.minutes_remaining}m
-                          </div>
-                          <div className="text-xs text-green-600 font-bold bg-green-100 px-2 py-1 rounded">
-                            +{quest.reward_xp} XP
-                          </div>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+                          <span>Time remaining: 9h 29m</span>
+                          <span className="text-orange-600 font-bold">
+                            +{difficultySettings[
+                              quest.difficulty as keyof typeof difficultySettings
+                            ].xp} XP
+                          </span>
                         </div>
-                        <div className="flex gap-2">
-                          {!isConfirmed && (
+                        {isCompleted && (
+                          <div className="text-green-600 font-bold text-sm">
+                            +{difficultySettings[
+                              quest.difficulty as keyof typeof difficultySettings
+                            ].xp} XP Earned
+                          </div>
+                        )}
+                        <div className="flex gap-2 mt-4">
+                          {!isConfirmed && !isEditing && (
                             <>
                               <Button
-                                variant="ghost"
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => {
                                   setEditingQuest(quest.quest_id);
                                   setEditTitle(quest.title);
                                   setEditDescription(quest.description);
                                 }}
-                                className="text-blue-600 hover:text-blue-700 transition-all duration-200"
+                                className="flex-1"
                               >
-                                <Edit className="w-4 h-4" />
+                                Edit
                               </Button>
-                              <form method="post" className="inline">
+                              <form method="post" className="flex-1">
                                 <input
                                   type="hidden"
                                   name="action"
@@ -640,16 +604,16 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                                 />
                                 <Button
                                   type="submit"
-                                  variant="ghost"
+                                  variant="destructive"
                                   size="sm"
-                                  className="text-red-600 hover:text-red-700 transition-all duration-200"
+                                  className="w-full"
                                 >
-                                  <X className="w-4 h-4" />
+                                  Delete
                                 </Button>
                               </form>
                             </>
                           )}
-                          {isConfirmed && !isCompleted && (
+                          {!isCompleted && !isEditing && (
                             <form method="post" className="flex-1">
                               <input
                                 type="hidden"
@@ -663,17 +627,11 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                               />
                               <Button
                                 type="submit"
-                                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 transition-all duration-200 text-white font-semibold"
+                                className="w-full bg-green-500 hover:bg-green-600 text-white"
                               >
-                                <CheckCircle className="w-4 h-4 mr-2" />
                                 Complete
                               </Button>
                             </form>
-                          )}
-                          {isCompleted && (
-                            <div className="text-xs text-green-600 font-bold bg-green-100 px-2 py-1 rounded">
-                              +{quest.reward_xp} XP Earned
-                            </div>
                           )}
                         </div>
                       </CardContent>
@@ -681,8 +639,8 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                   );
                 })}
               </div>
-            </div>
-          )}
+            </CardContent>
+          </Card>
 
           {/* Empty State */}
           {quests.length === 0 && (
@@ -707,10 +665,10 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
 
           {/* Quest History Section */}
           {questHistory.length > 0 && (
-            <div className="space-y-6">
+            <div className="space-y-6 text-xs">
               <div className="flex items-center gap-2">
                 <History className="w-6 h-6 text-blue-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-xs font-bold text-gray-900">
                   Quest History
                 </h2>
                 <Badge variant="outline" className="ml-2">
@@ -725,12 +683,12 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                     className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
                   >
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="text-sm font-semibold text-gray-600">
+                          <div className="text-xs font-semibold text-gray-600">
                             {dayRecord.day_name}
                           </div>
-                          <div className="text-lg font-bold text-gray-900">
+                          <div className="text-xs font-bold text-gray-900">
                             {dayRecord.formatted_date}
                           </div>
                           {dayRecord.is_today && (
@@ -744,7 +702,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-4 text-xs">
                           <div className="text-center">
                             <div className="font-bold text-blue-600">
                               {dayRecord.completed_quests}/
