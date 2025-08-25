@@ -980,13 +980,12 @@ export async function getOverallLeaderboard(request: Request, limit: number = 50
   
   try {
     const { data: rankings, error } = await client
-      .from("player_stats")
+      .from("leaderboard_view")
       .select(`
         profile_id,
         level,
         total_bricks,
         consecutive_days,
-        total_xp,
         profiles(name, username, avatar)
       `)
       .order("total_bricks", { ascending: false })
@@ -998,9 +997,7 @@ export async function getOverallLeaderboard(request: Request, limit: number = 50
     const rankedData = (rankings || []).map((player, index) => ({
       ...player,
       rank: index + 1,
-      name: player.profiles?.name || player.profiles?.username || "Anonymous",
-      username: player.profiles?.username || "user",
-      avatar: player.profiles?.avatar || null
+      name: player.profiles?.name || player.profiles?.username || "Anonymous"
     }));
 
     return rankedData;

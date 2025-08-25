@@ -110,51 +110,24 @@ export const loader = async ({
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  console.log("🚀 PROFILE LAYOUT ACTION STARTED!");
-  console.log("📝 Request method:", request.method);
-  console.log("🌐 Request URL:", request.url);
-  
   try {
     const { client } = makeSSRClient(request);
-    console.log("✅ Client created");
     
     const {
       data: { user },
     } = await client.auth.getUser();
-    console.log("👤 User auth check:", user ? "Logged in" : "Not logged in");
-    console.log("👤 User ID:", user?.id);
     
     if (!user) {
-      console.log("No user found, redirecting to login");
       return redirect("/auth/login");
     }
     
     const formData = await request.formData();
-    console.log("📋 FormData received");
-    
-    // Log all form data keys
-    const formDataKeys = Array.from(formData.keys());
-    console.log("🔑 Form data keys:", formDataKeys);
     
     const avatar = formData.get("avatar");
-    console.log("🖼️ Avatar data type:", avatar?.constructor?.name);
-    console.log("📁 Avatar is File:", avatar instanceof File);
-    
-    if (avatar instanceof File) {
-      console.log("📄 Avatar file details:", {
-        name: avatar.name,
-        size: avatar.size,
-        type: avatar.type
-      });
-    }
     
     // Handle avatar upload if file is provided
     if (avatar && avatar instanceof File) {
-      console.log("🔄 Processing avatar upload...");
-      
       if (avatar.size <= 2097152 && avatar.type.startsWith("image/")) {
-        console.log("✅ Avatar validation passed, uploading to storage...");
-        
         const { data, error } = await client.storage
           .from("avatars")
           .upload(user.id, avatar, {
@@ -163,38 +136,27 @@ export const action = async ({ request }: Route.ActionArgs) => {
           });
         
         if (error) {
-          console.error("❌ Storage upload error:", error);
+          console.error("Storage upload error:", error);
           return { formErrors: { avatar: ["Failed to upload avatar"] } };
         }
-        
-        console.log("✅ Avatar uploaded successfully:", data);
         
         const {
           data: { publicUrl },
         } = await client.storage.from("avatars").getPublicUrl(data.path);
-        console.log("🔗 Public URL generated:", publicUrl);
         
-        console.log("Updating avatar in database...");
         await updateUserAvatar(client, {
           id: user.id,
           avatarUrl: publicUrl,
         });
-        console.log("✅ Avatar URL updated in database successfully");
         
-        console.log("=== AVATAR UPLOAD SUCCESS ===");
         return { ok: true };
       } else {
-        console.log("Avatar validation failed - size or type invalid");
         return { formErrors: { avatar: ["Invalid file size or type"] } };
       }
     } else {
-      console.log("No avatar file provided, processing profile update...");
-      
       // Handle profile information update
       const name = formData.get("name") as string;
       const username = formData.get("username") as string;
-      
-      console.log("Profile data:", { name, username });
       
       await updateUserProfile(client, {
         id: user.id,
@@ -202,12 +164,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
         username,
       });
       
-      console.log("=== PROFILE UPDATE SUCCESS ===");
       return { ok: true };
     }
   } catch (error) {
-    console.error("=== ACTION ERROR ===");
-    console.error("Error details:", error);
+    console.error("Profile layout action error:", error);
     console.error("Error message:", error instanceof Error ? error.message : "Unknown error");
     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     throw error; // Re-throw to see the actual error

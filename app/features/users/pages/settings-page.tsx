@@ -30,63 +30,36 @@ const formSchema = z.object({
 });
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  console.log("🚀 SETTINGS ACTION STARTED!");
-  console.log("📝 Request method:", request.method);
-  console.log("🌐 Request URL:", request.url);
-  
   try {
     const { client } = makeSSRClient(request);
-    console.log("✅ Client created");
     
     const userId = await getLoggedInUserId(client);
-    console.log("👤 User ID:", userId);
     
     const formData = await request.formData();
-    console.log("📋 FormData received");
-    
-    // Log all form data keys
-    const formDataKeys = Array.from(formData.keys());
-    console.log("🔑 Form data keys:", formDataKeys);
     
     const avatar = formData.get("avatar");
-    console.log("🖼️ Avatar data type:", avatar?.constructor?.name);
-    console.log("📁 Avatar is File:", avatar instanceof File);
-    
-    if (avatar instanceof File) {
-      console.log("📄 Avatar file details:", {
-        name: avatar.name,
-        size: avatar.size,
-        type: avatar.type
-      });
-    }
     
     // Handle avatar upload
     if (avatar && avatar instanceof File) {
-      console.log("🔄 Processing avatar upload...");
       if (avatar.size <= 2097152 && avatar.type.startsWith("image/")) {
-        console.log("✅ Avatar validation passed");
         const { data, error } = await client.storage
           .from("avatars")
           .upload(`${userId}/${Date.now()}`, avatar, {
             contentType: avatar.type,
           });
         if (error) {
-          console.error("❌ Storage upload error:", error);
+          console.error("Storage upload error:", error);
           return { formErrors: { avatar: ["Failed to upload avatar"] } };
         }
-        console.log("✅ Avatar uploaded to storage:", data);
         const {
           data: { publicUrl },
         } = await client.storage.from("avatars").getPublicUrl(data.path);
-        console.log("🔗 Public URL generated:", publicUrl);
         await updateUserAvatar(client, {
           id: userId,
           avatarUrl: publicUrl,
         });
-        console.log("✅ Avatar URL updated in database");
         return { ok: true, newAvatarUrl: publicUrl };
       } else {
-        console.log("❌ Avatar validation failed");
         return { formErrors: { avatar: ["Invalid file size or type"] } };
       }
     }
@@ -95,33 +68,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const name = formData.get("name") as string;
     const username = formData.get("username") as string;
     
-    console.log("📝 Processing profile update...");
-    console.log("📋 Profile data:", { name, username });
-    
     if (name || username) {
       const { success, error } = formSchema.safeParse({ name, username });
       if (!success) {
-        console.log("❌ Profile validation failed:", error.flatten().fieldErrors);
         return { formErrors: error.flatten().fieldErrors };
       }
       
-      console.log("✅ Profile validation passed, calling updateUserProfile...");
       await updateUserProfile(client, {
         id: userId,
         name,
         username,
       });
       
-      console.log("✅ Profile updated successfully");
       return { ok: true };
     }
     
-    console.log("❌ No valid data provided");
     return { formErrors: { general: ["No valid data provided"] } };
   } catch (error) {
-    console.error("💥 ACTION ERROR:", error);
-    console.error("Error message:", error instanceof Error ? error.message : "Unknown error");
-    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+    console.error("Settings action error:", error);
     throw error;
   }
 };
@@ -150,9 +114,9 @@ export default function SettingsPage({
     }
   };
   return (
-    <div className="space-y-20">
-      <div className="grid grid-cols-6 gap-40">
-        <div className="col-span-4 flex flex-col gap-10">
+    <div className="space-y-20 px-5">
+      <div className="md:grid-cols-6 gap-40">
+        <div className="col-span-4 flex flex-col gap-10 py-5">
           {actionData?.ok ? (
             <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
               Your profile has been updated.
@@ -197,24 +161,7 @@ export default function SettingsPage({
           action="."
           encType="multipart/form-data"
           onSubmit={(e) => {
-            console.log("🎯 AVATAR FORM SUBMIT EVENT!");
-            console.log("📝 Form action:", e.currentTarget.action);
-            console.log("📋 Form method:", e.currentTarget.method);
-            console.log("🌐 Current URL:", window.location.href);
-            
-            const formData = new FormData(e.currentTarget);
-            console.log("📄 Form data keys:", Array.from(formData.keys()));
-            
-            const avatarFile = formData.get("avatar");
-            console.log("🖼️ Avatar file in form:", avatarFile);
-            
-            if (avatarFile instanceof File) {
-              console.log("📁 File details:", {
-                name: avatarFile.name,
-                size: avatarFile.size,
-                type: avatarFile.type
-              });
-            }
+            // Form submission handled by action
           }}
         >
           <Label className="flex flex-col gap-1">

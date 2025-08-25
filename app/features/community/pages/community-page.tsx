@@ -50,7 +50,7 @@ export default function RankPage(props: Route.ComponentProps) {
       level: r.level ?? 1,
       totalBricks: r.total_bricks ?? 0,
       consecutiveDays: r.consecutive_days ?? 0,
-      avatarUrl: r.avatar ?? undefined,
+      avatarUrl: r.profiles?.avatar ?? undefined,
       rank: r.rank ?? 0,
     }));
   }, [props.loaderData]);
