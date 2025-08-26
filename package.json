@@ -29,6 +29,7 @@
     "@tosspayments/tosspayments-sdk": "^2.3.7",
     "@types/uuid": "^10.0.0",
     "@vercel/react-router": "^1.2.2",
+    "@vercel/speed-insights": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

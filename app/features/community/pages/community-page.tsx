@@ -1,3 +1,4 @@
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { HeroSection } from "~/common/components/hero-section";
 import type { Route } from "./+types/submit-post-page";
 import { useMemo } from "react";
