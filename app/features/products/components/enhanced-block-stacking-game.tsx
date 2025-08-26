@@ -1,4 +1,3 @@
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import { useRef, useState, useEffect } from "react";
 import { Calendar } from "~/common/components/ui/calendar";
 import { format } from "date-fns";
