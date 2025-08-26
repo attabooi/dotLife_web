@@ -427,61 +427,15 @@ export default function EnhancedBlockStackingGame({
     }
   };
 
-  // Save blocks to database - 수정된 부분
+  // Save blocks to database - 최적화된 배치 저장
   const handleSaveBlocks = async () => {
     if (blocks.length === 0) {
       alert("No blocks to save!");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("action", "save-blocks");
-    formData.append("sessionId", sessionId);
-
-    // Save each block individually
-    for (const block of blocks) {
-      const blockFormData = new FormData();
-      blockFormData.append("action", "save-blocks");
-      blockFormData.append("sessionId", sessionId);
-      blockFormData.append(
-        "blockData",
-        JSON.stringify({
-          x: block.x,
-          y: block.y,
-          color: block.color,
-          date: block.date,
-        })
-      );
-
-      try {
-        const response = await fetch(window.location.href, {
-          method: "POST",
-          body: blockFormData,
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to save block");
-        }
-      } catch (error) {
-        alert("Failed to save blocks. Please try again.");
-        return;
-      }
-    }
-
-    setBlocks((prev) => prev.map((b) => ({ ...b, saved: true })));
-    setIsBuilding(false);
-    alert("Blocks saved successfully!");
-  };
-
-  // Confirm and permanently save blocks - 수정된 부분
-  const handleConfirmBlocks = async () => {
-    if (blocks.length === 0) {
-      alert("No blocks to confirm!");
-      return;
-    }
-
     try {
-      // 모든 블록을 한 번에 저장 (배치 처리)
+      // 모든 블록을 한 번에 배치 저장
       const allBlockData = blocks.map((block) => ({
         x: block.x,
         y: block.y,
@@ -494,29 +448,50 @@ export default function EnhancedBlockStackingGame({
       batchFormData.append("sessionId", sessionId);
       batchFormData.append("blockData", JSON.stringify(allBlockData));
 
-      const saveResponse = await fetch(window.location.href, {
+      const response = await fetch(window.location.href, {
         method: "POST",
         body: batchFormData,
       });
 
-      if (!saveResponse.ok) {
+      if (!response.ok) {
         throw new Error("Failed to save blocks");
       }
 
-      // 잠시 대기 (rate limit 방지)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setBlocks((prev) => prev.map((b) => ({ ...b, saved: true })));
+      setIsBuilding(false);
+      alert("Blocks saved successfully!");
+    } catch (error) {
+      alert("Failed to save blocks. Please try again.");
+    }
+  };
 
-      // 그 다음 모든 블록을 확인 상태로 변경
+  // Confirm and permanently save blocks - 최적화된 단일 요청
+  const handleConfirmBlocks = async () => {
+    if (blocks.length === 0) {
+      alert("No blocks to confirm!");
+      return;
+    }
+
+    try {
+      // 모든 블록을 한 번에 저장하고 확인 (통합 처리)
+      const allBlockData = blocks.map((block) => ({
+        x: block.x,
+        y: block.y,
+        color: block.color,
+        date: block.date,
+      }));
+
       const confirmFormData = new FormData();
-      confirmFormData.append("action", "confirm-blocks");
+      confirmFormData.append("action", "save-and-confirm-blocks");
       confirmFormData.append("sessionId", sessionId);
+      confirmFormData.append("blockData", JSON.stringify(allBlockData));
 
-      const confirmResponse = await fetch(window.location.href, {
+      const response = await fetch(window.location.href, {
         method: "POST",
         body: confirmFormData,
       });
 
-      if (confirmResponse.ok) {
+      if (response.ok) {
         // 사용자 친화적인 성공 메시지
         const successMessage = `🎉 Tower saved successfully!\n\n📊 Stats:\n• Blocks placed: ${
           blocks.length
@@ -528,7 +503,7 @@ export default function EnhancedBlockStackingGame({
         // 페이지를 리로드하여 저장된 블록들을 표시
         window.location.reload();
       } else {
-        throw new Error("Failed to confirm blocks");
+        throw new Error("Failed to save and confirm blocks");
       }
     } catch (error) {
       alert("Failed to confirm blocks. Please try again.");

@@ -1,131 +1,14 @@
 import { makeSSRClient } from "~/supa-client";
 
-// Get quest history (past records)
-export const getQuestHistory = async (request: Request, limit: number = 30) => {
-  const { client } = makeSSRClient(request);
-  const { data: { user } } = await client.auth.getUser();
-  
-  if (!user) throw new Error("Unauthorized");
-  
-  const { data, error } = await (client as any)
-    .from("quest_history_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .order("quest_date", { ascending: false })
-    .limit(limit);
-    
-  if (error) throw error;
-  return data;
-};
 
-// Get today's quests with calculated stats
-export const getQuests = async (request: Request) => {
-  const { client } = makeSSRClient(request);
-  const { data: { user } } = await client.auth.getUser();
-  
-  if (!user) throw new Error("Unauthorized");
-  
-  // Use current date in local timezone
-  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
-  
-  const { data, error } = await client
-    .from("quest_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .eq("quest_date", today);
-    
-  if (error) throw error;
-  return data;
-};
 
-// Test function to simulate different dates (for development only)
-export const getQuestsForDate = async (request: Request, targetDate: string) => {
-  const { client } = makeSSRClient(request);
-  const { data: { user } } = await client.auth.getUser();
-  
-  if (!user) throw new Error("Unauthorized");
-  
-  const { data, error } = await client
-    .from("quest_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .eq("quest_date", targetDate);
-    
-  if (error) throw error;
-  return data;
-};
 
-// Test function to get summary for specific date
-export const getQuestSummaryForDate = async (request: Request, targetDate: string) => {
-  const { client } = makeSSRClient(request);
-  const { data: { user } } = await client.auth.getUser();
-  
-  if (!user) throw new Error("Unauthorized");
-  
-  const { data, error } = await client
-    .from("quest_daily_summary_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .eq("quest_date", targetDate)
-    .single();
-    
-  if (error && error.code !== 'PGRST116') throw error;
-  return data || null;
-};
 
-// Test function to get history for specific date range
-export const getQuestHistoryForDateRange = async (request: Request, startDate: string, endDate: string) => {
-  const { client } = makeSSRClient(request);
-  const { data: { user } } = await client.auth.getUser();
-  
-  if (!user) throw new Error("Unauthorized");
-  
-  const { data, error } = await (client as any)
-    .from("quest_history_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .gte("quest_date", startDate)
-    .lte("quest_date", endDate)
-    .order("quest_date", { ascending: false });
-    
-  if (error) throw error;
-  return data;
-};
 
-// Get player stats
-export const getPlayerStats = async (request: Request, userId: string) => {
-  const { client } = makeSSRClient(request);
-  
-  const { data, error } = await client
-    .from("player_stats")
-    .select("*")
-    .eq("profile_id", userId)
-    .single();
-    
-  if (error) throw error;
-  return data;
-};
 
-// Get today's summary
-export const getTodayQuestSummary = async (request: Request) => {
-  const { client } = makeSSRClient(request);
-  const { data: { user } } = await client.auth.getUser();
-  
-  if (!user) throw new Error("Unauthorized");
-  
-  // Use current date in local timezone
-  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
-  
-  const { data, error } = await client
-    .from("quest_daily_summary_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .eq("quest_date", today)
-    .single();
-    
-  if (error) throw error;
-  return data;
-};
+
+
+
 
 // Create new quest (triggers will handle stats)
 export const createQuest = async (request: Request, questData: {
@@ -209,6 +92,20 @@ export const confirmQuests = async (request: Request) => {
   
   const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
   
+  // 먼저 오늘의 퀘스트가 있는지 확인
+  const { data: quests, error: questsError } = await client
+    .from("daily_quests")
+    .select("*")
+    .eq("profile_id", user.id)
+    .eq("quest_date", today);
+    
+  if (questsError) throw questsError;
+  
+  if (!quests || quests.length === 0) {
+    throw new Error("No quests found for today");
+  }
+  
+  // 모든 퀘스트를 confirmed 상태로 업데이트
   const { error } = await client
     .from("daily_quests")
     .update({ confirmed: true })
@@ -216,7 +113,12 @@ export const confirmQuests = async (request: Request) => {
     .eq("quest_date", today);
     
   if (error) throw error;
-  return { success: true };
+  
+  return { 
+    success: true, 
+    message: `Confirmed ${quests.length} quests successfully!`,
+    questsConfirmed: quests.length
+  };
 };
 
 // Check if all quests are completed and award bricks
@@ -331,4 +233,23 @@ export const updateQuest = async (request: Request, questId: number, updates: {
     
   if (error) throw error;
   return data;
+};
+
+// Get quest history (last 7 days)
+export const getQuestHistory = async (request: Request) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  // Get last 7 days of quest history
+  const { data: history, error } = await client
+    .from("quest_history_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .order("quest_date", { ascending: false })
+    .limit(7);
+    
+  if (error) throw error;
+  return history || [];
 };

@@ -143,6 +143,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
         await confirmBlocks(request, user.id, confirmSessionId);
         return { success: true, message: "Blocks confirmed" };
 
+      case "save-and-confirm-blocks":
+        const saveConfirmSessionId = formData.get("sessionId") as string;
+        const saveConfirmBlockData = JSON.parse(formData.get("blockData") as string);
+        // 먼저 배치 저장
+        await saveBlocksBatch(request, user.id, saveConfirmSessionId, saveConfirmBlockData);
+        // 그 다음 확인
+        await confirmBlocks(request, user.id, saveConfirmSessionId);
+        return { success: true, message: "Blocks saved and confirmed" };
+
       case "reset-tower":
         await resetTower(request, user.id);
         return { success: true, message: "Tower reset" };

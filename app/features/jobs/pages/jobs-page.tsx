@@ -9,14 +9,7 @@ import {
 import { Badge } from "~/common/components/ui/badge";
 import { HeroSection } from "~/common/components/hero-section";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "~/common/components/ui/dialog";
-import { X } from "lucide-react";
+
 import type { Route } from "./+types/jobs-page";
 import { redirect } from "react-router";
 import {
@@ -26,13 +19,10 @@ import {
   Castle,
   Info,
   Heart,
-  Crown,
   Edit,
   Zap,
-  Target,
-  Star,
-  Calendar,
   History,
+  Calendar,
   TrendingUp,
 } from "lucide-react";
 import { makeSSRClient } from "~/supa-client";
@@ -42,6 +32,7 @@ import {
   confirmQuests,
   deleteQuest,
   updateQuest,
+  getQuestHistory,
 } from "../queries";
 
 export const meta = () => {
@@ -72,7 +63,16 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // Use current date in local timezone
   const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
 
-  // Get today's quests with calculated stats
+  // Get dashboard data (single query optimization)
+  const { data: dashboardData, error: dashboardError } = await client
+    .from("quest_dashboard_view")
+    .select("*")
+    .eq("profile_id", user.id)
+    .single();
+
+  if (dashboardError) throw dashboardError;
+
+  // Get today's quests (separate query for quest details)
   const { data: quests, error: questsError } = await client
     .from("quest_view")
     .select("*")
@@ -81,50 +81,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   if (questsError) throw questsError;
 
-  // Get player stats
-  const { data: playerStats, error: statsError } = await client
-    .from("player_stats")
-    .select("*")
-    .eq("profile_id", user.id)
-    .single();
-
-  if (statsError) throw statsError;
-
-  // Get today's summary
-  const { data: todaySummary, error: summaryError } = await client
-    .from("quest_daily_summary_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .eq("quest_date", today)
-    .single();
-
-  if (summaryError && summaryError.code !== "PGRST116") throw summaryError;
-
-  // Get user profile
-  const { data: userProfile, error: profileError } = await client
-    .from("profiles")
-    .select("name, username, avatar")
-    .eq("profile_id", user.id)
-    .single();
-
-  if (profileError) throw profileError;
-
-  // Get quest history (last 7 days)
-  const { data: questHistory, error: historyError } = await (client as any)
-    .from("quest_history_view")
-    .select("*")
-    .eq("profile_id", user.id)
-    .order("quest_date", { ascending: false })
-    .limit(7);
-
-  if (historyError && historyError.code !== "PGRST116") throw historyError;
+  // Get quest history
+  const questHistory = await getQuestHistory(request);
 
   return {
     quests: quests || [],
-    playerStats,
-    todaySummary: todaySummary || null,
-    userProfile,
-    questHistory: questHistory || [],
+    dashboard: dashboardData,
+    questHistory,
   };
 };
 
@@ -133,33 +96,64 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData();
   const action = formData.get("action") as string;
 
-  if (action === "create") {
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const difficulty = formData.get("difficulty") as "easy" | "medium" | "hard";
+  try {
+    if (action === "create") {
+      const title = formData.get("title") as string;
+      const description = formData.get("description") as string;
+      const difficulty = formData.get("difficulty") as "easy" | "medium" | "hard";
 
-    await createQuest(request, { title, description, difficulty });
-  } else if (action === "complete") {
-    const questId = Number(formData.get("questId"));
-    await completeQuest(request, questId);
-  } else if (action === "confirm") {
-    await confirmQuests(request);
-  } else if (action === "delete") {
-    const questId = Number(formData.get("questId"));
-    await deleteQuest(request, questId);
-  } else if (action === "update") {
-    const questId = Number(formData.get("questId"));
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    await updateQuest(request, questId, { title, description });
+      await createQuest(request, { title, description, difficulty });
+    } else if (action === "complete") {
+      const questId = Number(formData.get("questId"));
+      await completeQuest(request, questId);
+    } else if (action === "confirm") {
+      const result = await confirmQuests(request);
+      return { success: true, message: result.message };
+    } else if (action === "delete") {
+      const questId = Number(formData.get("questId"));
+      await deleteQuest(request, questId);
+    } else if (action === "update") {
+      const questId = Number(formData.get("questId"));
+      const title = formData.get("title") as string;
+      const description = formData.get("description") as string;
+      await updateQuest(request, questId, { title, description });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Action error:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "An error occurred" 
+    };
   }
-
-  return null;
 };
 
 export default function QuestPage({ loaderData }: Route.ComponentProps) {
-  const { quests, playerStats, todaySummary, userProfile, questHistory } =
-    loaderData || {};
+  const { quests, dashboard, questHistory } = loaderData || {};
+  
+  // Extract data from dashboard
+  const playerStats = dashboard ? {
+    level: dashboard.level,
+    total_bricks: dashboard.total_bricks,
+    current_xp: dashboard.current_xp,
+    xp_to_next_level: dashboard.xp_to_next_level,
+    consecutive_days: dashboard.consecutive_days,
+    hearts: dashboard.hearts,
+  } : null;
+  
+  const userProfile = dashboard ? {
+    name: dashboard.name,
+    username: dashboard.username,
+    avatar: dashboard.avatar,
+  } : null;
+  
+  const todaySummary = dashboard ? {
+    total_quests: dashboard.total_quests,
+    completed_quests: dashboard.completed_quests,
+    earned_bricks_if_perfect: dashboard.earned_bricks_if_perfect,
+    all_completed: dashboard.completed_quests === dashboard.total_quests && dashboard.total_quests > 0,
+  } : null;
 
   // Local state for forms
   const [newQuestTitle, setNewQuestTitle] = useState("");
@@ -171,9 +165,6 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  // Check if quests are confirmed
-  const isConfirmed = (todaySummary as any)?.all_confirmed || false;
 
   // Difficulty settings
   const difficultySettings = {
@@ -207,7 +198,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
     }
   }
 
-  if (!loaderData) {
+  if (!loaderData || !playerStats || !userProfile) {
     return <div>Loading...</div>;
   }
 
@@ -215,6 +206,9 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
   const progressString = todaySummary
     ? `${todaySummary.completed_quests || 0}/${todaySummary.total_quests || 0}`
     : "0/0";
+
+  // Check if quests are confirmed
+  const isConfirmed = quests.length > 0 && quests.every((q: any) => q.confirmed);
 
   // Format today's date
   const todayFormatted = new Date().toLocaleDateString("en-US", {
@@ -662,161 +656,162 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
             </CardContent>
           </Card>
 
-          {/* Empty State */}
-          {quests.length === 0 && (
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardContent className="p-16 text-center">
-                <div className="space-y-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto">
-                    <Castle className="w-10 h-10 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                      No quests yet
-                    </h3>
-                    <p className="text-gray-600">
-                      Create your first quest to build your tower and level up!
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                     {/* Empty State */}
+           {quests.length === 0 && (
+             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+               <CardContent className="p-16 text-center">
+                 <div className="space-y-6">
+                   <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto">
+                     <Castle className="w-10 h-10 text-blue-600" />
+                   </div>
+                   <div>
+                     <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                       No quests yet
+                     </h3>
+                     <p className="text-gray-600">
+                       Create your first quest to build your tower and level up!
+                     </p>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
+           )}
 
-          {/* Quest History Section */}
-          {questHistory.length > 0 && (
-            <div className="space-y-6 text-xs">
-              <div className="flex items-center gap-2">
-                <History className="w-6 h-6 text-blue-600" />
-                <h2 className="text-xs font-bold text-gray-900">
-                  Quest History
-                </h2>
-                <Badge variant="outline" className="ml-2">
-                  Last 7 days
-                </Badge>
-              </div>
+           {/* Quest History Section */}
+           {questHistory && questHistory.length > 0 && (
+             <div className="space-y-6 text-xs">
+               <div className="flex items-center gap-2">
+                 <History className="w-6 h-6 text-blue-600" />
+                 <h2 className="text-xs font-bold text-gray-900">
+                   Quest History
+                 </h2>
+                 <Badge variant="outline" className="ml-2">
+                   Last 7 days
+                 </Badge>
+               </div>
+               <div className="space-y-4">
+                 {questHistory.map((dayRecord: any) => (
+                   <Card
+                     key={dayRecord.quest_date}
+                     className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
+                   >
+                     <CardHeader className="pb-3">
+                       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                         <div className="flex items-center gap-3">
+                           <div className="text-xs font-semibold text-gray-600">
+                             {dayRecord.day_name}
+                           </div>
+                           <div className="text-xs font-bold text-gray-900">
+                             {dayRecord.formatted_date}
+                           </div>
+                           {dayRecord.is_today && (
+                             <Badge className="bg-blue-500 text-white">
+                               Today
+                             </Badge>
+                           )}
+                           {dayRecord.is_yesterday && (
+                             <Badge className="bg-green-500 text-white">
+                               Yesterday
+                             </Badge>
+                           )}
+                         </div>
+                         <div className="flex items-center gap-4 text-xs">
+                           <div className="text-center">
+                             <div className="font-bold text-blue-600">
+                               {dayRecord.completed_quests}/
+                               {dayRecord.total_quests}
+                             </div>
+                             <div className="text-gray-500">Completed</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="font-bold text-yellow-600">
+                               +{dayRecord.total_xp_earned}
+                             </div>
+                             <div className="text-gray-500">XP</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="font-bold text-green-600">
+                               +{dayRecord.total_bricks_earned}
+                             </div>
+                             <div className="text-gray-500">Bricks</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="font-bold text-purple-600">
+                               {dayRecord.completion_percentage}%
+                             </div>
+                             <div className="text-gray-500">Success</div>
+                           </div>
+                         </div>
+                       </div>
+                     </CardHeader>
 
-              <div className="space-y-4">
-                {questHistory.map((dayRecord: any) => (
-                  <Card
-                    key={dayRecord.quest_date}
-                    className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="text-xs font-semibold text-gray-600">
-                            {dayRecord.day_name}
-                          </div>
-                          <div className="text-xs font-bold text-gray-900">
-                            {dayRecord.formatted_date}
-                          </div>
-                          {dayRecord.is_today && (
-                            <Badge className="bg-blue-500 text-white">
-                              Today
-                            </Badge>
-                          )}
-                          {dayRecord.is_yesterday && (
-                            <Badge className="bg-green-500 text-white">
-                              Yesterday
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs">
-                          <div className="text-center">
-                            <div className="font-bold text-blue-600">
-                              {dayRecord.completed_quests}/
-                              {dayRecord.total_quests}
-                            </div>
-                            <div className="text-gray-500">Completed</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-bold text-yellow-600">
-                              +{dayRecord.total_xp_earned}
-                            </div>
-                            <div className="text-gray-500">XP</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-bold text-green-600">
-                              +{dayRecord.total_bricks_earned}
-                            </div>
-                            <div className="text-gray-500">Bricks</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-bold text-purple-600">
-                              {dayRecord.completion_percentage}%
-                            </div>
-                            <div className="text-gray-500">Success</div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
+                     {dayRecord.quests && dayRecord.quests.length > 0 && (
+                       <CardContent className="pt-0">
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                           {dayRecord.quests.map((quest: any) => (
+                             <div
+                               key={quest.quest_id}
+                               className={`p-3 rounded-lg border ${
+                                 quest.completed
+                                   ? "bg-green-50 border-green-200"
+                                   : "bg-gray-50 border-gray-200"
+                               }`}
+                             >
+                               <div className="flex items-start justify-between mb-2">
+                                 <h4
+                                   className={`font-semibold text-sm ${
+                                     quest.completed
+                                       ? "text-green-800"
+                                       : "text-gray-700"
+                                   }`}
+                                 >
+                                   {quest.title}
+                                 </h4>
+                                 <Badge
+                                   variant="outline"
+                                   className={`text-xs ${
+                                     quest.difficulty === "easy"
+                                       ? "bg-green-100 text-green-700"
+                                       : quest.difficulty === "medium"
+                                       ? "bg-yellow-100 text-yellow-700"
+                                       : "bg-red-100 text-red-700"
+                                   }`}
+                                 >
+                                   {quest.difficulty}
+                                 </Badge>
+                               </div>
+                               <p className="text-xs text-gray-600 mb-2">
+                                 {quest.description}
+                               </p>
+                               <div className="flex items-center justify-between text-xs">
+                                 <span className="text-gray-500">
+                                   +{quest.reward_xp} XP
+                                 </span>
+                                 {quest.completed ? (
+                                   <div className="flex items-center gap-1 text-green-600">
+                                     <CheckCircle className="w-3 h-3" />
+                                     <span>Completed</span>
+                                   </div>
+                                 ) : (
+                                   <span className="text-gray-400">
+                                     Not completed
+                                   </span>
+                                 )}
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       </CardContent>
+                     )}
+                   </Card>
+                 ))}
+               </div>
+             </div>
+           )}
 
-                    {dayRecord.quests && dayRecord.quests.length > 0 && (
-                      <CardContent className="pt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {dayRecord.quests.map((quest: any) => (
-                            <div
-                              key={quest.quest_id}
-                              className={`p-3 rounded-lg border ${
-                                quest.completed
-                                  ? "bg-green-50 border-green-200"
-                                  : "bg-gray-50 border-gray-200"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between mb-2">
-                                <h4
-                                  className={`font-semibold text-sm ${
-                                    quest.completed
-                                      ? "text-green-800"
-                                      : "text-gray-700"
-                                  }`}
-                                >
-                                  {quest.title}
-                                </h4>
-                                <Badge
-                                  variant="outline"
-                                  className={`text-xs ${
-                                    quest.difficulty === "easy"
-                                      ? "bg-green-100 text-green-700"
-                                      : quest.difficulty === "medium"
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : "bg-red-100 text-red-700"
-                                  }`}
-                                >
-                                  {quest.difficulty}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-gray-600 mb-2">
-                                {quest.description}
-                              </p>
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-gray-500">
-                                  +{quest.reward_xp} XP
-                                </span>
-                                {quest.completed ? (
-                                  <div className="flex items-center gap-1 text-green-600">
-                                    <CheckCircle className="w-3 h-3" />
-                                    <span>Completed</span>
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400">
-                                    Not completed
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+
+         </div>
+       </div>
+     </div>
+   );
+ }
