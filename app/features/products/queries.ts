@@ -305,7 +305,7 @@ export async function resetTower(request: Request, profileId: string) {
 
   if (deleteError) throw deleteError;
 
-  // 플레이어 스탯에서 available_bricks를 total_bricks로 복원
+  // 플레이어 스탯에서 total_blocks를 0으로 리셋하고 available_bricks를 total_bricks로 복원
   const { data: playerStats, error: statsError } = await client
     .from("player_stats")
     .select("total_bricks")
@@ -316,7 +316,10 @@ export async function resetTower(request: Request, profileId: string) {
 
   const { error: updateError } = await client
     .from("player_stats")
-    .update({ available_bricks: playerStats?.total_bricks || 0 })
+    .update({ 
+      available_bricks: playerStats?.total_bricks || 0,
+      total_blocks: 0  // total_blocks를 0으로 리셋
+    })
     .eq("profile_id", profileId);
 
   if (updateError) throw updateError;
