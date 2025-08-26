@@ -452,11 +452,30 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                     {todayFormatted}
                   </Badge>
                 </h2>
-                {todaySummary && (
-                  <div className="text-xs text-orange-600 font-bold bg-orange-100 px-3 py-1 rounded">
-                    {progressString} completed
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  {todaySummary && (
+                    <div className="text-xs text-orange-600 font-bold bg-orange-100 px-3 py-1 rounded">
+                      {progressString} completed
+                    </div>
+                  )}
+                  {!isConfirmed && quests.length > 0 && (
+                    <form method="post">
+                      <input type="hidden" name="action" value="confirm" />
+                      <Button
+                        type="submit"
+                        size="sm"
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        Confirm All Quests
+                      </Button>
+                    </form>
+                  )}
+                  {isConfirmed && (
+                    <Badge className="bg-green-500 text-white">
+                      Confirmed
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -614,7 +633,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                               </form>
                             </>
                           )}
-                          {!isCompleted && !isEditing && (
+                          {isConfirmed && !isCompleted && !isEditing && (
                             <form method="post" className="flex-1">
                               <input
                                 type="hidden"

@@ -31,8 +31,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     // 우리가 만든 getOverallLeaderboard 함수 사용
     const rankings = await getOverallLeaderboard(request, 100);
     
-    console.log("[ranking loader] count:", rankings?.length ?? 0);
-    console.log("[ranking loader] first:", rankings?.[0] ?? null);
+    
 
     return { rankings: rankings ?? [] };
   } catch (e) {
@@ -85,7 +84,7 @@ export default function RankPage(props: Route.ComponentProps) {
 
   const handleUserClick = (userId: string) => {
     // Navigate to user profile page - will implement with router later
-    console.log(`Navigate to user profile: ${userId}`);
+  
   };
 
   return (

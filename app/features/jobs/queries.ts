@@ -139,14 +139,13 @@ export const createQuest = async (request: Request, questData: {
   if (!user) throw new Error("Unauthorized");
   
   const difficultyRewards = {
-    easy: { xp: 10, bricks: 1 },    // 쉬운 퀘스트 = 1 브릭
-    medium: { xp: 20, bricks: 2 },  // 보통 퀘스트 = 2 브릭
-    hard: { xp: 35, bricks: 3 }     // 어려운 퀘스트 = 3 브릭
+    easy: { xp: 10, bricks: 0 },
+    medium: { xp: 20, bricks: 0 },
+    hard: { xp: 35, bricks: 0 }
   };
   
   // Validate difficulty and provide default if invalid
   if (!questData.difficulty || !difficultyRewards[questData.difficulty]) {
-    console.error('Invalid difficulty:', questData.difficulty);
     questData.difficulty = 'medium'; // Default to medium
   }
   
@@ -179,7 +178,7 @@ export const createQuest = async (request: Request, questData: {
   return data;
 };
 
-// Complete quest (triggers will handle all stats updates)
+// Complete quest
 export const completeQuest = async (request: Request, questId: number) => {
   const { client } = makeSSRClient(request);
   const { data: { user } } = await client.auth.getUser();
@@ -218,6 +217,80 @@ export const confirmQuests = async (request: Request) => {
     
   if (error) throw error;
   return { success: true };
+};
+
+// Check if all quests are completed and award bricks
+export const checkAndAwardBricks = async (request: Request) => {
+  const { client } = makeSSRClient(request);
+  const { data: { user } } = await client.auth.getUser();
+  
+  if (!user) throw new Error("Unauthorized");
+  
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  
+  // Get today's quests
+  const { data: quests, error: questsError } = await client
+    .from("daily_quests")
+    .select("*")
+    .eq("profile_id", user.id)
+    .eq("quest_date", today);
+    
+  if (questsError) throw questsError;
+  
+  if (!quests || quests.length === 0) {
+    return { success: false, message: "No quests found for today" };
+  }
+  
+  // Check if all quests are completed
+  const allCompleted = quests.every(quest => quest.completed);
+  
+  if (!allCompleted) {
+    return { success: false, message: "Not all quests are completed yet" };
+  }
+  
+  // Check if bricks were already awarded today
+  const { data: stats, error: statsError } = await client
+    .from("player_stats")
+    .select("consecutive_days, available_bricks, total_bricks, last_bricks_awarded_date")
+    .eq("profile_id", user.id)
+    .single();
+    
+  if (statsError) throw statsError;
+  
+  // Check if bricks were already awarded today
+  if (stats.last_bricks_awarded_date === today) {
+    return { success: false, message: "Bricks already awarded today" };
+  }
+  
+  let bricksToAward = 3; // Base bricks
+  
+  // Add bonus based on consecutive days
+  if (stats.consecutive_days >= 30) {
+    bricksToAward = 6;
+  } else if (stats.consecutive_days >= 20) {
+    bricksToAward = 5;
+  } else if (stats.consecutive_days >= 10) {
+    bricksToAward = 4;
+  }
+  
+  // Award bricks
+  const { error: bricksError } = await client
+    .from("player_stats")
+    .update({ 
+      available_bricks: stats.available_bricks + bricksToAward,
+      total_bricks: stats.total_bricks + bricksToAward,
+      last_bricks_awarded_date: today
+    })
+    .eq("profile_id", user.id);
+    
+  if (bricksError) throw bricksError;
+  
+  return { 
+    success: true, 
+    bricksAwarded: bricksToAward,
+    consecutiveDays: stats.consecutive_days,
+    message: `Awarded ${bricksToAward} bricks for completing all quests!`
+  };
 };
 
 // Delete quest

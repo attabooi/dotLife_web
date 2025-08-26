@@ -109,31 +109,8 @@ begin
     
     -- 추가 검증: 이미 완료된 퀘스트인지 확인
     if old.completed = true then
-      perform public.log_debug(
-        new.profile_id,
-        'Quest completion trigger - ALREADY COMPLETED',
-        jsonb_build_object(
-          'quest_id', new.quest_id,
-          'old_completed', old.completed,
-          'new_completed', new.completed,
-          'skip_reason', 'quest_already_completed'
-        )
-      );
       return new;
     end if;
-    
-    -- 디버깅: 중복 실행 방지 로그
-    perform public.log_debug(
-      new.profile_id,
-      'Quest completion trigger - START',
-      jsonb_build_object(
-        'quest_id', new.quest_id,
-        'old_completed', old.completed,
-        'new_completed', new.completed,
-        'trigger_time', now(),
-        'quest_title', new.title
-      )
-    );
     
     -- Get current player stats
     select current_xp, level into v_old_xp, v_new_level
@@ -173,19 +150,9 @@ begin
         current_xp = v_new_xp,
         level = v_new_level,
         xp_to_next_level = v_new_level * 100,
-        consecutive_days = consecutive_days + 1,
-        last_completed_date = v_today,
-        -- Only give bricks if all quests are completed today
-        total_bricks = case 
-          when v_all_completed_today then
-            total_bricks + case
-              when consecutive_days + 1 >= 30 then 6
-              when consecutive_days + 1 >= 20 then 5
-              when consecutive_days + 1 >= 10 then 4
-              else 3
-            end
-          else total_bricks
-        end
+                 consecutive_days = consecutive_days + 1,
+         last_completed_date = v_today,
+         total_bricks = total_bricks
       where profile_id = new.profile_id;
     else
       -- Reset consecutive days
@@ -194,60 +161,14 @@ begin
         current_xp = v_new_xp,
         level = v_new_level,
         xp_to_next_level = v_new_level * 100,
-        consecutive_days = 1,
-        last_completed_date = v_today,
-        -- Only give bricks if all quests are completed today
-        total_bricks = case 
-          when v_all_completed_today then total_bricks + 3
-          else total_bricks
-        end
+                 consecutive_days = 1,
+         last_completed_date = v_today,
+         total_bricks = total_bricks
       where profile_id = new.profile_id;
     end if;
     
     -- Update hearts based on today's completion rate
     perform public.update_player_hearts(new.profile_id, v_today);
-    
-    -- 디버깅: 트리거 완료 로그
-    perform public.log_debug(
-      new.profile_id,
-      'Quest completion trigger - COMPLETED',
-      jsonb_build_object(
-        'quest_id', new.quest_id,
-        'new_xp', v_new_xp,
-        'new_level', v_new_level,
-        'consecutive_days_updated', case 
-          when exists (select 1 from public.player_stats where profile_id = new.profile_id and last_completed_date = v_yesterday) 
-          then 'incremented' 
-          else 'reset_to_1' 
-        end,
-        'bricks_awarded', case 
-          when v_all_completed_today then
-            case
-              when (select consecutive_days from public.player_stats where profile_id = new.profile_id) >= 30 then 6
-              when (select consecutive_days from public.player_stats where profile_id = new.profile_id) >= 20 then 5
-              when (select consecutive_days from public.player_stats where profile_id = new.profile_id) >= 10 then 4
-              else 3
-            end
-          else 0
-        end
-      )
-    );
-  else
-    -- 디버깅: 트리거가 실행되지 않은 이유
-    perform public.log_debug(
-      new.profile_id,
-      'Quest completion trigger - SKIPPED',
-      jsonb_build_object(
-        'quest_id', new.quest_id,
-        'old_completed', old.completed,
-        'new_completed', new.completed,
-        'skip_reason', case 
-          when new.completed = false then 'quest_not_completed'
-          when old.completed = true then 'quest_already_completed'
-          else 'unknown'
-        end
-      )
-    );
   end if;
   
   return new;
