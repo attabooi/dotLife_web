@@ -8,8 +8,6 @@ import { Zap, User } from "lucide-react";
 import { PixelFlame } from "~/common/components/ui/pixel-icons";
 import { cn } from "~/lib/utils";
 import { getOverallLeaderboard } from "~/features/products/queries";
-import { getLeaderboard } from "../queries";
-import { makeSSRClient } from "~/supa-client";
 
 
 interface UserRank {
@@ -30,8 +28,10 @@ export const meta: Route.MetaFunction = () => {
 };
 export async function loader({ request }: Route.LoaderArgs) {
   try {
-    const { client } = makeSSRClient(request);
-    const rankings = await getLeaderboard(client);
+    // 우리가 만든 getOverallLeaderboard 함수 사용
+    const rankings = await getOverallLeaderboard(request, 100);
+    
+    
 
     return { rankings: rankings ?? [] };
   } catch (e) {
@@ -43,16 +43,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function RankPage(props: Route.ComponentProps) {
   const userRankings: UserRank[] = useMemo(() => {
     const rows = (props.loaderData as any)?.rankings ?? [];
-    return rows.map((r: any, index: number) => ({
+    return rows.map((r: any) => ({
       id: r.profile_id ?? r.id ?? "",
       username: r.name ?? r.username ?? "Anonymous",
       level: r.level ?? 1,
       totalBricks: r.total_bricks ?? 0,
       consecutiveDays: r.consecutive_days ?? 0,
-      avatarUrl: r.avatar ?? undefined,      // ✅ 수정
-      rank: r.rank ?? index + 1,             // ✅ fallback: 순위 계산
+      avatarUrl: r.profiles?.avatar ?? undefined,
+      rank: r.rank ?? 0,
     }));
-    
   }, [props.loaderData]);
 
   const getRankIcon = (rank: number) => {
