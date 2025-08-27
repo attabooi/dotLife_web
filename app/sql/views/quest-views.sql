@@ -267,6 +267,7 @@ select
   current_date - ds.quest_date as days_ago
 from daily_stats ds
 join public.profiles p on p.profile_id = ds.profile_id
+where ds.quest_date < current_date  -- Exclude today's quests from history
 order by ds.quest_date desc;
 
 -- 4) Player stats view with calculated fields

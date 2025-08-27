@@ -60,8 +60,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     return redirect("/auth/login");
   }
 
-  // Use current date in local timezone
-  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
+  // Get current time to determine which day's quests to show
+  const now = new Date();
+  
+  // Check if it's past midnight (00:00) - if so, show today's quests
+  // If it's before midnight, show today's quests
+  const questDate = now.toLocaleDateString("en-CA"); // YYYY-MM-DD format
 
   // Get dashboard data (single query optimization)
   const { data: dashboardData, error: dashboardError } = await client
@@ -77,7 +81,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     .from("quest_view")
     .select("*")
     .eq("profile_id", user.id)
-    .eq("quest_date", today);
+    .eq("quest_date", questDate);
 
   if (questsError) throw questsError;
 
@@ -176,22 +180,6 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
     return () => clearInterval(timer);
   }, []);
 
-  // Function to calculate remaining time
-  const calculateRemainingTime = (deadline: string) => {
-    const deadlineDate = new Date(deadline);
-    const timeDiff = deadlineDate.getTime() - currentTime.getTime();
-    
-    if (timeDiff <= 0) {
-      return { hours: 0, minutes: 0, seconds: 0, expired: true };
-    }
-    
-    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-    
-    return { hours, minutes, seconds, expired: false };
-  };
-
   // Difficulty settings
   const difficultySettings = {
     easy: { reward: 10, color: "bg-green-500", label: "Easy", xp: 10 },
@@ -235,6 +223,11 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
 
   // Check if quests are confirmed
   const isConfirmed = quests.length > 0 && quests.every((q: any) => q.confirmed);
+  
+  // Check if it's past midnight (00:00) - quests are expired
+  const isPastMidnight = currentTime.getHours() === 0;
+
+
 
   // Format today's date
   const todayFormatted = new Date().toLocaleDateString("en-US", {
@@ -392,8 +385,8 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
             </CardContent>
           </Card>
 
-          {/* Add Quest Form (confirm 전만) */}
-          {!isConfirmed && (
+                     {/* Add Quest Form (confirm 전만 또는 퀘스트가 없을 때 또는 자정이 지났을 때) */}
+           {(!isConfirmed || quests.length === 0 || isPastMidnight) && (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-xl">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -465,67 +458,78 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-xl">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="text-xs font-bold text-gray-900 flex items-center gap-2">
-                  <Sword className="w-5 h-5 text-orange-500" />
-                  Today's Quests ({quests.length})
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    {todayFormatted}
-                  </Badge>
-                </h2>
-                                 <div className="flex items-center gap-3">
-                   {/* Current time */}
-                   <div className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                     Current: {currentTime.toLocaleTimeString('en-US', { 
-                       hour12: false,
-                       hour: '2-digit',
-                       minute: '2-digit',
-                       second: '2-digit'
-                     })}
-                   </div>
-                   {todaySummary && (
+                                 <h2 className="text-xs font-bold text-gray-900 flex items-center gap-2">
+                   <Sword className="w-5 h-5 text-orange-500" />
+                   {isPastMidnight ? "Yesterday's Quests (Expired)" : "Today's Quests"} ({quests.length})
+                   <Badge variant="outline" className="ml-2 text-xs">
+                     {todayFormatted}
+                   </Badge>
+                   {isPastMidnight && (
+                     <Badge variant="destructive" className="ml-2 text-xs">
+                       EXPIRED
+                     </Badge>
+                   )}
+                 </h2>
+                                                   <div className="flex items-center gap-3">
+                    {/* Current time */}
+                    <div className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                      Current: {currentTime.toLocaleTimeString('en-US', { 
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
+                    </div>
+                    {todaySummary && (
                      <div className="text-xs text-orange-600 font-bold bg-orange-100 px-3 py-1 rounded">
                        {progressString} completed
                      </div>
                    )}
-                   {!isConfirmed && quests.length > 0 && (
-                     <form method="post">
-                       <input type="hidden" name="action" value="confirm" />
-                       <Button
-                         type="submit"
-                         size="sm"
-                         className="bg-blue-500 hover:bg-blue-600 text-white"
-                       >
-                         Confirm All Quests
-                       </Button>
-                     </form>
-                   )}
-                   {isConfirmed && (
-                     <Badge className="bg-green-500 text-white">
-                       Confirmed
-                     </Badge>
-                   )}
+                                                                                 {!isConfirmed && quests.length > 0 && !isPastMidnight && (
+                       <form method="post">
+                         <input type="hidden" name="action" value="confirm" />
+                         <Button
+                           type="submit"
+                           size="sm"
+                           className="bg-blue-500 hover:bg-blue-600 text-white"
+                         >
+                           Confirm All Quests
+                         </Button>
+                       </form>
+                     )}
+                     {isConfirmed && !isPastMidnight && (
+                       <Badge className="bg-green-500 text-white">
+                         Confirmed
+                       </Badge>
+                     )}
+                     {isPastMidnight && (
+                       <Badge className="bg-red-500 text-white">
+                         Yesterday's Quests - Expired
+                       </Badge>
+                     )}
                  </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {quests.map((quest: any) => {
-                  const isEditing = editingQuest === quest.quest_id;
-                  const isCompleted = quest.completed;
+                                 {quests.map((quest: any) => {
+                   const isEditing = editingQuest === quest.quest_id;
+                   const isCompleted = quest.completed;
+                   // Check if expired using server data
+                   const isExpired = (quest.hours_remaining <= 0 && quest.minutes_remaining <= 0) || isPastMidnight;
 
                   return (
                                          <Card
                        key={quest.quest_id}
                        className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ease-out rounded-xl ${
                          isCompleted ? "bg-green-50/80 border-green-200" : ""
-                       } ${
-                         (() => {
-                           const remaining = calculateRemainingTime(quest.deadline);
-                           if (remaining.expired) return "border-red-300 bg-red-50/80";
-                           if (remaining.hours < 1) return "border-orange-300 bg-orange-50/80";
-                           return "";
-                         })()
-                       }`}
+                                               } ${
+                          (() => {
+                            if (isExpired) return "border-red-300 bg-red-50/80";
+                            if (quest.hours_remaining < 1) return "border-orange-300 bg-orange-50/80";
+                            return "";
+                          })()
+                        }`}
                      >
                       <CardHeader className="pb-4">
                         <div className="flex items-start justify-between">
@@ -620,26 +624,24 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                            <span>
                              {isCompleted ? (
                                <span className="text-green-600 font-semibold">✅ Completed</span>
-                             ) : (
-                               (() => {
-                                 const remaining = calculateRemainingTime(quest.deadline);
-                                 if (remaining.expired) {
-                                   return <span className="text-red-500 font-semibold animate-pulse">⏰ Expired</span>;
-                                 }
-                                 if (remaining.hours < 1) {
-                                   return (
-                                     <span className="text-orange-600 font-semibold animate-pulse font-mono">
-                                       ⚠️ Time left: {remaining.hours.toString().padStart(2, '0')}:{remaining.minutes.toString().padStart(2, '0')}:{remaining.seconds.toString().padStart(2, '0')}
-                                     </span>
-                                   );
-                                 }
-                                 return (
-                                   <span className="font-mono text-gray-600">
-                                     ⏰ Time left: {remaining.hours.toString().padStart(2, '0')}:{remaining.minutes.toString().padStart(2, '0')}:{remaining.seconds.toString().padStart(2, '0')}
-                                   </span>
-                                 );
-                               })()
-                             )}
+                             ) : isExpired ? (
+                               <span className="text-red-500 font-semibold animate-pulse">⏰ Expired</span>
+                                                           ) : (
+                                (() => {
+                                  if (quest.hours_remaining < 1) {
+                                    return (
+                                      <span className="text-orange-600 font-semibold animate-pulse font-mono">
+                                        ⚠️ Time left: {quest.hours_remaining}h {quest.minutes_remaining}m
+                                      </span>
+                                    );
+                                  }
+                                  return (
+                                    <span className="font-mono text-gray-600">
+                                      ⏰ Time left: {quest.hours_remaining}h {quest.minutes_remaining}m
+                                    </span>
+                                  );
+                                })()
+                              )}
                            </span>
                            <span className="text-orange-600 font-bold">
                              +{difficultySettings[
@@ -742,8 +744,8 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
              </Card>
            )}
 
-           {/* Quest History Section */}
-           {questHistory && questHistory.length > 0 && (
+                       {/* Quest History Section */}
+            {questHistory && questHistory.filter((dayRecord: any) => !dayRecord.is_today).length > 0 && (
              <div className="space-y-6 text-xs">
                <div className="flex items-center gap-2">
                  <History className="w-6 h-6 text-blue-600" />
@@ -754,8 +756,8 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                    Last 7 days
                  </Badge>
                </div>
-               <div className="space-y-4">
-                 {questHistory.map((dayRecord: any) => (
+                               <div className="space-y-4">
+                  {questHistory.filter((dayRecord: any) => !dayRecord.is_today).map((dayRecord: any) => (
                    <Card
                      key={dayRecord.quest_date}
                      className="bg-white/80 backdrop-blur-sm border-0 shadow-lg"
