@@ -155,7 +155,7 @@ export const checkAndAwardBricks = async (request: Request) => {
     .from("player_stats")
     .select("consecutive_days, available_bricks, total_bricks, last_bricks_awarded_date")
     .eq("profile_id", user.id)
-    .single();
+    .maybeSingle();
     
   if (statsError) throw statsError;
   

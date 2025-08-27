@@ -385,26 +385,22 @@ export default function EnhancedBlockStackingGame({
 
   // Support check function
   const hasSupport = (x: number, y: number): boolean => {
-    // Check if position is already occupied
+    // 이미 블록이 있으면 false
     if (blocks.some((block) => block.x === x && block.y === y)) {
       return false;
     }
-
-    // Ground level support
+  
+    // 바닥이면 true
     if (y === GRID_HEIGHT - 1) return true;
-
-    // Support from other blocks
-    const hasBlockBelow = blocks.some(
-      (block) => block.x === x && block.y === y + 1
-    );
-    const hasBlockLeft = blocks.some(
-      (block) => block.x === x - 1 && block.y === y
-    );
-    const hasBlockRight = blocks.some(
-      (block) => block.x === x + 1 && block.y === y
-    );
-
-    return hasBlockBelow || (hasBlockLeft && hasBlockRight);
+  
+    // 인접한 곳에 블록이 하나라도 있으면 true
+    const hasBlockBelow = blocks.some((block) => block.x === x && block.y === y + 1);
+    const hasBlockLeft = blocks.some((block) => block.x === x - 1 && block.y === y);
+    const hasBlockRight = blocks.some((block) => block.x === x + 1 && block.y === y);
+    const hasBlockAbove = blocks.some((block) => block.x === x && block.y === y - 1);
+  
+    // 어느 방향이든 인접한 블록이 있으면 배치 가능
+    return hasBlockBelow || hasBlockLeft || hasBlockRight || hasBlockAbove;
   };
 
   // Add block to canvas
