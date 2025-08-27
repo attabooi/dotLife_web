@@ -40,7 +40,8 @@ export const createQuest = async (request: Request, questData: {
   
   const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
   const deadline = new Date();
-  deadline.setHours(23, 59, 59, 999);
+  deadline.setHours(23, 59, 59, 999); // 23:59:59 (자정 1분 전)
+  // 만약 정확히 자정(00:00:00)에 마감하려면: deadline.setHours(0, 0, 0, 0);
   
   const { data, error } = await client
     .from("daily_quests")

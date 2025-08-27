@@ -8,7 +8,7 @@ import {
 } from "~/common/components/ui/card";
 import { Badge } from "~/common/components/ui/badge";
 import { HeroSection } from "~/common/components/hero-section";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import type { Route } from "./+types/jobs-page";
 import { redirect } from "react-router";
@@ -165,6 +165,32 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Real-time time update
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every second
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Function to calculate remaining time
+  const calculateRemainingTime = (deadline: string) => {
+    const deadlineDate = new Date(deadline);
+    const timeDiff = deadlineDate.getTime() - currentTime.getTime();
+    
+    if (timeDiff <= 0) {
+      return { hours: 0, minutes: 0, seconds: 0, expired: true };
+    }
+    
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+    
+    return { hours, minutes, seconds, expired: false };
+  };
 
   // Difficulty settings
   const difficultySettings = {
@@ -446,30 +472,39 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                     {todayFormatted}
                   </Badge>
                 </h2>
-                <div className="flex items-center gap-3">
-                  {todaySummary && (
-                    <div className="text-xs text-orange-600 font-bold bg-orange-100 px-3 py-1 rounded">
-                      {progressString} completed
-                    </div>
-                  )}
-                  {!isConfirmed && quests.length > 0 && (
-                    <form method="post">
-                      <input type="hidden" name="action" value="confirm" />
-                      <Button
-                        type="submit"
-                        size="sm"
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                      >
-                        Confirm All Quests
-                      </Button>
-                    </form>
-                  )}
-                  {isConfirmed && (
-                    <Badge className="bg-green-500 text-white">
-                      Confirmed
-                    </Badge>
-                  )}
-                </div>
+                                 <div className="flex items-center gap-3">
+                   {/* Current time */}
+                   <div className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                     Current: {currentTime.toLocaleTimeString('en-US', { 
+                       hour12: false,
+                       hour: '2-digit',
+                       minute: '2-digit',
+                       second: '2-digit'
+                     })}
+                   </div>
+                   {todaySummary && (
+                     <div className="text-xs text-orange-600 font-bold bg-orange-100 px-3 py-1 rounded">
+                       {progressString} completed
+                     </div>
+                   )}
+                   {!isConfirmed && quests.length > 0 && (
+                     <form method="post">
+                       <input type="hidden" name="action" value="confirm" />
+                       <Button
+                         type="submit"
+                         size="sm"
+                         className="bg-blue-500 hover:bg-blue-600 text-white"
+                       >
+                         Confirm All Quests
+                       </Button>
+                     </form>
+                   )}
+                   {isConfirmed && (
+                     <Badge className="bg-green-500 text-white">
+                       Confirmed
+                     </Badge>
+                   )}
+                 </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -479,12 +514,19 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                   const isCompleted = quest.completed;
 
                   return (
-                    <Card
-                      key={quest.quest_id}
-                      className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ease-out rounded-xl ${
-                        isCompleted ? "bg-green-50/80 border-green-200" : ""
-                      }`}
-                    >
+                                         <Card
+                       key={quest.quest_id}
+                       className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ease-out rounded-xl ${
+                         isCompleted ? "bg-green-50/80 border-green-200" : ""
+                       } ${
+                         (() => {
+                           const remaining = calculateRemainingTime(quest.deadline);
+                           if (remaining.expired) return "border-red-300 bg-red-50/80";
+                           if (remaining.hours < 1) return "border-orange-300 bg-orange-50/80";
+                           return "";
+                         })()
+                       }`}
+                     >
                       <CardHeader className="pb-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -574,21 +616,44 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0">
-                        <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-                          <span>Time remaining: 9h 29m</span>
-                          <span className="text-orange-600 font-bold">
-                            +{difficultySettings[
-                              quest.difficulty as keyof typeof difficultySettings
-                            ].xp} XP
-                          </span>
-                        </div>
-                        {isCompleted && (
-                          <div className="text-green-600 font-bold text-sm">
-                            +{difficultySettings[
-                              quest.difficulty as keyof typeof difficultySettings
-                            ].xp} XP Earned
-                          </div>
-                        )}
+                                                 <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+                           <span>
+                             {isCompleted ? (
+                               <span className="text-green-600 font-semibold">✅ Completed</span>
+                             ) : (
+                               (() => {
+                                 const remaining = calculateRemainingTime(quest.deadline);
+                                 if (remaining.expired) {
+                                   return <span className="text-red-500 font-semibold animate-pulse">⏰ Expired</span>;
+                                 }
+                                 if (remaining.hours < 1) {
+                                   return (
+                                     <span className="text-orange-600 font-semibold animate-pulse font-mono">
+                                       ⚠️ Time left: {remaining.hours.toString().padStart(2, '0')}:{remaining.minutes.toString().padStart(2, '0')}:{remaining.seconds.toString().padStart(2, '0')}
+                                     </span>
+                                   );
+                                 }
+                                 return (
+                                   <span className="font-mono text-gray-600">
+                                     ⏰ Time left: {remaining.hours.toString().padStart(2, '0')}:{remaining.minutes.toString().padStart(2, '0')}:{remaining.seconds.toString().padStart(2, '0')}
+                                   </span>
+                                 );
+                               })()
+                             )}
+                           </span>
+                           <span className="text-orange-600 font-bold">
+                             +{difficultySettings[
+                               quest.difficulty as keyof typeof difficultySettings
+                             ].xp} XP
+                           </span>
+                         </div>
+                                                 {isCompleted && (
+                           <div className="text-green-600 font-bold text-sm">
+                             +{difficultySettings[
+                               quest.difficulty as keyof typeof difficultySettings
+                             ].xp} XP Earned
+                           </div>
+                         )}
                         <div className="flex gap-2 mt-4">
                           {!isConfirmed && !isEditing && (
                             <>
