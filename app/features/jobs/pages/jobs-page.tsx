@@ -50,6 +50,7 @@ export const meta = () => {
   ];
 };
 
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { client } = makeSSRClient(request);
   const {
