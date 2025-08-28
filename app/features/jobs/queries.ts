@@ -261,11 +261,14 @@ export const getQuestHistory = async (request: Request) => {
   
   if (!user) throw new Error("Unauthorized");
   
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+
   // Get last 7 days of quest history
   const { data: history, error } = await client
     .from("quest_history_view")
     .select("*")
     .eq("profile_id", user.id)
+    .neq("quest_date", today)   // ✅ 오늘 제외
     .order("quest_date", { ascending: false })
     .limit(7);
     
