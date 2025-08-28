@@ -56,14 +56,17 @@ export const loader = async ({ request }: Route["LoaderArgs"]) => {
   let isAdmin = false;
 
   if (user) {
-    // Check if user is admin by checking profile role
-    const { data: profile } = await client
+    // Check if user is admin by checking profile role (any admin can access)
+    const { data: profiles } = await client
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
-      .single();
+      .eq("profile_id", user.id);
       
-    isAdmin = Boolean(profile && (profile.role === 'admin' ));
+    console.log("Debug - User ID:", user.id);
+    console.log("Debug - Profiles:", profiles);
+    
+    isAdmin = Boolean(profiles && profiles.some(profile => profile.role === 'admin'));
+    console.log("Debug - Is Admin:", isAdmin);
 
     if (isAdmin) {
       // Admin sees all patch notes
@@ -162,6 +165,7 @@ export default function PatchNotesPage({ loaderData }: Route["ComponentProps"]) 
       release_date: new Date().toISOString().split("T")[0],
       is_published: false,
     });
+    console.log("Create button clicked - isCreating set to true");
   };
 
   const handleEdit = (patchNote: any) => {
@@ -193,8 +197,11 @@ export default function PatchNotesPage({ loaderData }: Route["ComponentProps"]) 
         />
 
         <div className="space-y-6 md:space-y-8 px-4 md:px-6 max-w-4xl mx-auto">
-          {/* Admin Controls */}
-          {isAdmin && (
+                     {/* Admin Controls */}
+           <div className="mb-4 p-2 bg-yellow-50 text-yellow-700 rounded">
+             Debug: isAdmin = {String(isAdmin)}, isCreating = {String(isCreating)}
+           </div>
+           {isAdmin && (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -210,9 +217,12 @@ export default function PatchNotesPage({ loaderData }: Route["ComponentProps"]) 
                   )}
                 </div>
               </CardHeader>
-              {isCreating && (
-                <CardContent>
-                  <form method="post" className="space-y-4">
+                             {isCreating && (
+                 <CardContent>
+                   <div className="mb-4 p-2 bg-blue-50 text-blue-700 rounded">
+                     Debug: Create form is visible
+                   </div>
+                   <form method="post" className="space-y-4">
                     <input type="hidden" name="action" value="create" />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>

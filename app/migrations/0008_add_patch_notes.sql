@@ -20,9 +20,9 @@ CREATE POLICY "Allow read published patch notes" ON patch_notes
 -- Allow only admins to manage patch notes
 CREATE POLICY "Allow admin to manage patch notes" ON patch_notes
   FOR ALL USING (
-    auth.uid() IN (
-      SELECT id FROM profiles 
-      WHERE role = 'admin' OR username = 'admin'
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE profile_id = auth.uid() AND role = 'admin'
     )
   );
 

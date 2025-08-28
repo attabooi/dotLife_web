@@ -21,14 +21,15 @@ export const getAllPatchNotes = async (request: Request) => {
   
   if (!user) throw new Error("Unauthorized");
   
-  // Check if user is admin by checking profile role
-  const { data: profile } = await client
+  // Check if user is admin by checking profile role (any admin can access)
+  const { data: profiles } = await client
     .from("profiles")
-    .select("role, username")
-    .eq("id", user.id)
-    .single();
+    .select("role")
+    .eq("profile_id", user.id);
     
-  if (!profile || (profile.role !== 'admin' && profile.username !== 'admin')) {
+  const isAdmin = profiles && profiles.some(profile => profile.role === 'admin');
+  
+  if (!isAdmin) {
     throw new Error("Admin access required");
   }
   
@@ -54,14 +55,15 @@ export const createPatchNote = async (request: Request, patchNoteData: {
   
   if (!user) throw new Error("Unauthorized");
   
-  // Check if user is admin by checking profile role
-  const { data: profile } = await client
+  // Check if user is admin by checking profile role (any admin can access)
+  const { data: profiles } = await client
     .from("profiles")
-    .select("role, username")
-    .eq("id", user.id)
-    .single();
+    .select("role")
+    .eq("profile_id", user.id);
     
-  if (!profile || (profile.role !== 'admin' && profile.username !== 'admin')) {
+  const isAdmin = profiles && profiles.some(profile => profile.role === 'admin');
+  
+  if (!isAdmin) {
     throw new Error("Admin access required");
   }
   
@@ -88,14 +90,15 @@ export const updatePatchNote = async (request: Request, id: number, updates: {
   
   if (!user) throw new Error("Unauthorized");
   
-  // Check if user is admin by checking profile role
-  const { data: profile } = await client
+  // Check if user is admin by checking profile role (any admin can access)
+  const { data: profiles } = await client
     .from("profiles")
-    .select("role, username")
-    .eq("id", user.id)
-    .single();
+    .select("role")
+    .eq("profile_id", user.id);
     
-  if (!profile || (profile.role !== 'admin' && profile.username !== 'admin')) {
+  const isAdmin = profiles && profiles.some(profile => profile.role === 'admin');
+  
+  if (!isAdmin) {
     throw new Error("Admin access required");
   }
   
@@ -117,14 +120,15 @@ export const deletePatchNote = async (request: Request, id: number) => {
   
   if (!user) throw new Error("Unauthorized");
   
-  // Check if user is admin by checking profile role
-  const { data: profile } = await client
+  // Check if user is admin by checking profile role (any admin can access)
+  const { data: profiles } = await client
     .from("profiles")
-    .select("role, username")
-    .eq("id", user.id)
-    .single();
+    .select("role")
+    .eq("profile_id", user.id);
     
-  if (!profile || (profile.role !== 'admin' && profile.username !== 'admin')) {
+  const isAdmin = profiles && profiles.some(profile => profile.role === 'admin');
+  
+  if (!isAdmin) {
     throw new Error("Admin access required");
   }
   
