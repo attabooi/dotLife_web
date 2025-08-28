@@ -59,11 +59,11 @@ export const loader = async ({ request }: Route["LoaderArgs"]) => {
     // Check if user is admin by checking profile role
     const { data: profile } = await client
       .from("profiles")
-      .select("role, username")
+      .select("role")
       .eq("id", user.id)
       .single();
       
-    isAdmin = Boolean(profile && (profile.role === 'admin' || profile.username === 'admin'));
+    isAdmin = Boolean(profile && (profile.role === 'admin' ));
 
     if (isAdmin) {
       // Admin sees all patch notes
@@ -187,16 +187,6 @@ export default function PatchNotesPage({ loaderData }: Route["ComponentProps"]) 
   return (
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
       <div className="w-full px-0 pt-16 pb-4 md:pt-20 md:pb-8">
-        {/* Debug info - remove this later */}
-        <div className="px-4 md:px-6 max-w-4xl mx-auto mb-4">
-          <div className="bg-yellow-100 p-4 rounded-lg">
-            <p><strong>Debug Info:</strong></p>
-            <p>User ID: {loaderData?.isAdmin ? 'Admin' : 'Not Admin'}</p>
-            <p>Is Admin: {isAdmin ? 'Yes' : 'No'}</p>
-            <p>Patch Notes Count: {patchNotes?.length || 0}</p>
-          </div>
-        </div>
-        
         <HeroSection
           title="Patch Notes"
           description="Latest updates and improvements to dotLife"
