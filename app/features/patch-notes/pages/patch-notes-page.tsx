@@ -56,8 +56,14 @@ export const loader = async ({ request }: Route["LoaderArgs"]) => {
   let isAdmin = false;
 
   if (user) {
-    // Check if user is admin (replace with your admin user ID)
-    isAdmin = user.id === 'b6327126-79ae-4dac-8f2a-d1a6f3931ded';
+    // Check if user is admin by checking profile role
+    const { data: profile } = await client
+      .from("profiles")
+      .select("role, username")
+      .eq("id", user.id)
+      .single();
+      
+    isAdmin = Boolean(profile && (profile.role === 'admin' || profile.username === 'admin'));
 
     if (isAdmin) {
       // Admin sees all patch notes

@@ -17,9 +17,14 @@ ALTER TABLE patch_notes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow read published patch notes" ON patch_notes
   FOR SELECT USING (is_published = true);
 
--- Allow only specific admin user to manage patch notes (replace 'your-admin-user-id' with actual UUID)
+-- Allow only admins to manage patch notes
 CREATE POLICY "Allow admin to manage patch notes" ON patch_notes
-  FOR ALL USING (auth.uid() = 'b6327126-79ae-4dac-8f2a-d1a6f3931ded'::uuid);
+  FOR ALL USING (
+    auth.uid() IN (
+      SELECT id FROM profiles 
+      WHERE role = 'admin' OR username = 'admin'
+    )
+  );
 
 -- Create index for better performance
 CREATE INDEX idx_patch_notes_release_date ON patch_notes(release_date DESC);
