@@ -1,5 +1,5 @@
 import { makeSSRClient } from "~/supa-client";
-
+import { DateTime } from "luxon";
 
 
 
@@ -38,7 +38,7 @@ export const createQuest = async (request: Request, questData: {
     throw new Error(`Invalid difficulty level: ${questData.difficulty}`);
   }
   
-  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  const today = DateTime.now().setZone("Asia/Seoul").toFormat("yyyy-LL-dd");
   const deadline = new Date();
   // Set deadline to next day at 00:00:00 (midnight)
   deadline.setDate(deadline.getDate() + 1);

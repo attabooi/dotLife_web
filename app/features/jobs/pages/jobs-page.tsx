@@ -34,12 +34,10 @@ import {
   updateQuest,
   getQuestHistory,
 } from "../queries";
+import { DateTime } from "luxon";
 
 export const meta = () => {
-  const today = new Date().toLocaleDateString("en-US", {
-    month: "numeric",
-    day: "numeric",
-  });
+  const today = DateTime.now().setZone("Asia/Seoul").toFormat("yyyy-LL-dd");
 
   return [
     { title: `Daily Quests - ${today} | dotLife` },
