@@ -64,7 +64,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   
   // Check if it's past midnight (00:00) - if so, show today's quests
   // If it's before midnight, show today's quests
-  const questDate = now.toLocaleDateString("en-CA"); // YYYY-MM-DD format
+  const questDate = DateTime.now().setZone("Asia/Seoul").toFormat("yyyy-LL-dd"); // YYYY-MM-DD format
 
   // Get dashboard data (single query optimization)
   const { data: dashboardData, error: dashboardError } = await client
@@ -226,15 +226,12 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
   const isConfirmed = quests.length > 0 && quests.every((q: any) => q.confirmed);
   
   // Check if it's past midnight (00:00) - quests are expired
-  const isPastMidnight = currentTime.getHours() === 0;
+  const isPastMidnight = DateTime.now().setZone("Asia/Seoul").toFormat("HH") === "00";
 
 
 
   // Format today's date
-  const todayFormatted = new Date().toLocaleDateString("en-US", {
-    month: "numeric",
-    day: "numeric",
-  });
+  const todayFormatted = DateTime.now().setZone("Asia/Seoul").toFormat("yyyy-LL-dd");
 
   return (
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
@@ -518,16 +515,15 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                    const isCompleted = quest.completed;
                    
                    // Calculate remaining time manually from current time to next midnight
-                   const nextMidnight = new Date();
-                   nextMidnight.setDate(nextMidnight.getDate() + 1);
-                   nextMidnight.setHours(0, 0, 0, 0);
+                   const nowSeoul = DateTime.now().setZone("Asia/Seoul");
+
+                   // 다음 자정 (서울 기준)
+                   const nextMidnight = nowSeoul.plus({ days: 1 }).startOf("day");
                    
-                   const timeDiff = nextMidnight.getTime() - currentTime.getTime();
+                   // 두 시점 차이 (밀리초)
+                   const timeDiff = nextMidnight.diff(nowSeoul).toMillis();
                    const hoursRemaining = Math.floor(timeDiff / (1000 * 60 * 60));
                    const minutesRemaining = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-                   
-                   // Debug: Log calculated time
-                   console.log('Quest:', quest.title, 'Current time:', currentTime.toISOString(), 'Next midnight:', nextMidnight.toISOString(), 'Hours remaining:', hoursRemaining, 'Minutes remaining:', minutesRemaining);
                    
                    // Check if expired using calculated time
                    const isExpired = (hoursRemaining <= 0 && minutesRemaining <= 0) || isPastMidnight;
