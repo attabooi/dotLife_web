@@ -19,7 +19,7 @@ CREATE POLICY "Allow read published patch notes" ON patch_notes
 
 -- Allow only specific admin user to manage patch notes (replace 'your-admin-user-id' with actual UUID)
 CREATE POLICY "Allow admin to manage patch notes" ON patch_notes
-  FOR ALL USING (auth.uid() = 'your-admin-user-id'::uuid);
+  FOR ALL USING (auth.uid() = 'b6327126-79ae-4dac-8f2a-d1a6f3931ded'::uuid);
 
 -- Create index for better performance
 CREATE INDEX idx_patch_notes_release_date ON patch_notes(release_date DESC);

@@ -57,7 +57,7 @@ export const loader = async ({ request }: Route["LoaderArgs"]) => {
 
   if (user) {
     // Check if user is admin (replace with your admin user ID)
-    isAdmin = user.id === 'your-admin-user-id';
+    isAdmin = user.id === 'b6327126-79ae-4dac-8f2a-d1a6f3931ded';
 
     if (isAdmin) {
       // Admin sees all patch notes
@@ -181,6 +181,16 @@ export default function PatchNotesPage({ loaderData }: Route["ComponentProps"]) 
   return (
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-screen">
       <div className="w-full px-0 pt-16 pb-4 md:pt-20 md:pb-8">
+        {/* Debug info - remove this later */}
+        <div className="px-4 md:px-6 max-w-4xl mx-auto mb-4">
+          <div className="bg-yellow-100 p-4 rounded-lg">
+            <p><strong>Debug Info:</strong></p>
+            <p>User ID: {loaderData?.isAdmin ? 'Admin' : 'Not Admin'}</p>
+            <p>Is Admin: {isAdmin ? 'Yes' : 'No'}</p>
+            <p>Patch Notes Count: {patchNotes?.length || 0}</p>
+          </div>
+        </div>
+        
         <HeroSection
           title="Patch Notes"
           description="Latest updates and improvements to dotLife"
