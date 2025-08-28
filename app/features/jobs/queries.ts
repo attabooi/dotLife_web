@@ -261,7 +261,7 @@ export const getQuestHistory = async (request: Request) => {
   
   if (!user) throw new Error("Unauthorized");
   
-  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  const today = DateTime.now().setZone("Asia/Seoul").toFormat("yyyy-LL-dd");
 
   // Get last 7 days of quest history
   const { data: history, error } = await client
