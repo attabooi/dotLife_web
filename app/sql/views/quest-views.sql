@@ -107,8 +107,8 @@ from public.daily_quests dq
 join public.profiles p on p.profile_id = dq.profile_id
 left join public.player_stats ps on ps.profile_id = dq.profile_id;
 
--- 2) Per-day summary view with all calculations
-create or replace view public.quest_daily_summary_view as
+-- 2) Daily summary view for today's quests and player stats
+create or replace view public.quest_dashboard_view as
 with quest_aggregates as (
   select
     dq.profile_id,
@@ -116,10 +116,11 @@ with quest_aggregates as (
     count(*)::int as total_quests,
     sum(case when dq.completed then 1 else 0 end)::int as completed_quests,
     sum(case when dq.confirmed then 1 else 0 end)::int as confirmed_quests,
-    bool_and(dq.confirmed) as all_confirmed,
+    (count(*) = sum(case when dq.confirmed then 1 else 0 end) and count(*) > 0) as all_confirmed,
     sum(case when dq.completed then dq.reward_xp else 0 end)::int as total_xp_earned,
     sum(case when dq.completed then dq.reward_bricks else 0 end)::int as total_bricks_earned
   from public.daily_quests dq
+  where dq.quest_date = current_date  -- Only show today's data
   group by dq.profile_id, dq.quest_date
 ),
 player_calculations as (

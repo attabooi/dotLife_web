@@ -813,11 +813,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                            <div className="text-xs font-bold text-gray-900">
                              {dayRecord.formatted_date}
                            </div>
-                           {dayRecord.is_today && (
-                             <Badge className="bg-blue-500 text-white">
-                               Today
-                             </Badge>
-                           )}
+                           
                            {dayRecord.is_yesterday && (
                              <Badge className="bg-green-500 text-white">
                                Yesterday
