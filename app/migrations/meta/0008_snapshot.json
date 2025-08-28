@@ -1,0 +1,98 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "patch_notes": {
+      "name": "patch_notes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "release_date": {
+          "name": "release_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_DATE"
+        },
+        "is_published": {
+          "name": "is_published",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "references": {
+            "table": "profiles",
+            "column": "id"
+          },
+          "onDelete": "cascade"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "NOW()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "NOW()"
+        }
+      },
+      "indexes": {
+        "idx_patch_notes_release_date": {
+          "name": "idx_patch_notes_release_date",
+          "columns": ["release_date"],
+          "isUnique": false
+        },
+        "idx_patch_notes_is_published": {
+          "name": "idx_patch_notes_is_published",
+          "columns": ["is_published"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "patch_notes_created_by_profiles_id_fk": {
+          "name": "patch_notes_created_by_profiles_id_fk",
+          "tableFrom": "patch_notes",
+          "tableTo": "profiles",
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      }
+    }
+  }
+}

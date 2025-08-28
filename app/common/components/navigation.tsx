@@ -45,6 +45,10 @@ const menus = [
     name: "Rank",
     to: "/rank",
   },
+  {
+    name: "Patch Notes",
+    to: "/patch-notes",
+  },
 ];
 
 export default function Navigation({

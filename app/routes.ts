@@ -67,6 +67,9 @@ export default [
     route("/submit", "features/community/pages/submit-post-page.tsx"),
     route("/:postId", "features/community/pages/post-page.tsx"),
   ]),
+  ...prefix("/patch-notes", [
+    index("features/patch-notes/pages/patch-notes-page.tsx"),
+  ]),
   ...prefix("/auth", [
     layout("features/auth/layouts/auth-layout.tsx", [
       route("/login", "features/auth/pages/login-page.tsx"),
