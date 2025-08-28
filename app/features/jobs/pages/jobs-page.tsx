@@ -120,7 +120,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
       const questId = Number(formData.get("questId"));
       const title = formData.get("title") as string;
       const description = formData.get("description") as string;
-      await updateQuest(request, questId, { title, description });
+      const difficulty = formData.get("difficulty") as "easy" | "medium" | "hard";
+      await updateQuest(request, questId, { title, description, difficulty });
     }
 
     return { success: true };
@@ -168,6 +169,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
   const [editingQuest, setEditingQuest] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editDifficulty, setEditDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -559,6 +561,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                                   name="questId"
                                   value={quest.quest_id}
                                 />
+                                <input type="hidden" name="difficulty" value={editDifficulty} />
                                 <Input
                                   name="title"
                                   value={editTitle}
@@ -578,6 +581,30 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                                   required
                                 />
                                 <div className="flex gap-2">
+                                  {(["easy", "medium", "hard"] as const).map(
+                                    (difficulty) => (
+                                      <Button
+                                        key={difficulty}
+                                        type="button"
+                                        variant={
+                                          editDifficulty === difficulty
+                                            ? "default"
+                                            : "outline"
+                                        }
+                                        size="sm"
+                                        onClick={() => setEditDifficulty(difficulty)}
+                                        className={`transition-all duration-200 h-8 px-3 text-xs ${
+                                          editDifficulty === difficulty
+                                            ? difficultySettings[difficulty].color
+                                            : ""
+                                        }`}
+                                      >
+                                        {difficultySettings[difficulty].label}
+                                      </Button>
+                                    )
+                                  )}
+                                </div>
+                                <div className="flex gap-2">
                                   <Button type="submit" size="sm">
                                     Save
                                   </Button>
@@ -589,6 +616,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                                       setEditingQuest(null);
                                       setEditTitle("");
                                       setEditDescription("");
+                                      setEditDifficulty("medium");
                                     }}
                                   >
                                     Cancel
@@ -680,6 +708,7 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                                   setEditingQuest(quest.quest_id);
                                   setEditTitle(quest.title);
                                   setEditDescription(quest.description);
+                                  setEditDifficulty(quest.difficulty);
                                 }}
                                 className="flex-1"
                               >

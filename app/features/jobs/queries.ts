@@ -219,11 +219,28 @@ export const updateQuest = async (request: Request, questId: number, updates: {
   title?: string;
   description?: string;
   difficulty?: 'easy' | 'medium' | 'hard';
+  reward_xp?: number;
+  reward_bricks?: number;
 }) => {
   const { client } = makeSSRClient(request);
   const { data: { user } } = await client.auth.getUser();
   
   if (!user) throw new Error("Unauthorized");
+  
+  // If difficulty is being updated, recalculate rewards
+  if (updates.difficulty) {
+    const difficultyRewards = {
+      easy: { xp: 10, bricks: 0 },
+      medium: { xp: 20, bricks: 0 },
+      hard: { xp: 35, bricks: 0 }
+    };
+    
+    const reward = difficultyRewards[updates.difficulty];
+    if (reward) {
+      updates.reward_xp = reward.xp;
+      updates.reward_bricks = reward.bricks;
+    }
+  }
   
   const { data, error } = await client
     .from("daily_quests")
