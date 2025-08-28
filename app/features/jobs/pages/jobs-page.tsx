@@ -515,8 +515,21 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                                  {quests.map((quest: any) => {
                    const isEditing = editingQuest === quest.quest_id;
                    const isCompleted = quest.completed;
-                   // Check if expired using server data
-                   const isExpired = (quest.hours_remaining <= 0 && quest.minutes_remaining <= 0) || isPastMidnight;
+                   
+                   // Calculate remaining time manually from current time to next midnight
+                   const nextMidnight = new Date();
+                   nextMidnight.setDate(nextMidnight.getDate() + 1);
+                   nextMidnight.setHours(0, 0, 0, 0);
+                   
+                   const timeDiff = nextMidnight.getTime() - currentTime.getTime();
+                   const hoursRemaining = Math.floor(timeDiff / (1000 * 60 * 60));
+                   const minutesRemaining = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                   
+                   // Debug: Log calculated time
+                   console.log('Quest:', quest.title, 'Current time:', currentTime.toISOString(), 'Next midnight:', nextMidnight.toISOString(), 'Hours remaining:', hoursRemaining, 'Minutes remaining:', minutesRemaining);
+                   
+                   // Check if expired using calculated time
+                   const isExpired = (hoursRemaining <= 0 && minutesRemaining <= 0) || isPastMidnight;
 
                   return (
                                          <Card
@@ -524,11 +537,11 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                        className={`bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 ease-out rounded-xl ${
                          isCompleted ? "bg-green-50/80 border-green-200" : ""
                                                } ${
-                          (() => {
-                            if (isExpired) return "border-red-300 bg-red-50/80";
-                            if (quest.hours_remaining < 1) return "border-orange-300 bg-orange-50/80";
-                            return "";
-                          })()
+                                                     (() => {
+                             if (isExpired) return "border-red-300 bg-red-50/80";
+                             if (hoursRemaining < 1) return "border-orange-300 bg-orange-50/80";
+                             return "";
+                           })()
                         }`}
                      >
                       <CardHeader className="pb-4">
@@ -627,20 +640,20 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
                              ) : isExpired ? (
                                <span className="text-red-500 font-semibold animate-pulse">⏰ Expired</span>
                                                            ) : (
-                                (() => {
-                                  if (quest.hours_remaining < 1) {
-                                    return (
-                                      <span className="text-orange-600 font-semibold animate-pulse font-mono">
-                                        ⚠️ Time left: {quest.hours_remaining}h {quest.minutes_remaining}m
-                                      </span>
-                                    );
-                                  }
-                                  return (
-                                    <span className="font-mono text-gray-600">
-                                      ⏰ Time left: {quest.hours_remaining}h {quest.minutes_remaining}m
-                                    </span>
-                                  );
-                                })()
+                                                                 (() => {
+                                   if (hoursRemaining < 1) {
+                                     return (
+                                       <span className="text-orange-600 font-semibold animate-pulse font-mono">
+                                         ⚠️ Time left: {hoursRemaining}h {minutesRemaining}m
+                                       </span>
+                                     );
+                                   }
+                                   return (
+                                     <span className="font-mono text-gray-600">
+                                       ⏰ Time left: {hoursRemaining}h {minutesRemaining}m
+                                     </span>
+                                   );
+                                 })()
                               )}
                            </span>
                            <span className="text-orange-600 font-bold">
