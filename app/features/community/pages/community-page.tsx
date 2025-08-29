@@ -8,6 +8,7 @@ import { Zap, User } from "lucide-react";
 import { PixelFlame } from "~/common/components/ui/pixel-icons";
 import { cn } from "~/lib/utils";
 import { getOverallLeaderboard } from "~/features/products/queries";
+import { useNavigate } from "react-router";
 
 
 interface UserRank {
@@ -41,11 +42,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function RankPage(props: Route.ComponentProps) {
+  const navigate = useNavigate();
+  
   const userRankings: UserRank[] = useMemo(() => {
     const rows = (props.loaderData as any)?.rankings ?? [];
     return rows.map((r: any) => ({
       id: r.profile_id ?? r.id ?? "",
-      username: r.name ?? r.username ?? "Anonymous",
+      username: r.profiles?.username ?? r.name ?? r.username ?? "Anonymous",
       level: r.level ?? 1,
       totalBricks: r.total_bricks ?? 0,
       consecutiveDays: r.consecutive_days ?? 0,
@@ -82,9 +85,9 @@ export default function RankPage(props: Route.ComponentProps) {
     return Math.max(20, (totalBricks / maxBricks) * 100);
   };
 
-  const handleUserClick = (userId: string) => {
-    // Navigate to user profile page - will implement with router later
-  
+  const handleUserClick = (username: string) => {
+    // Navigate to user profile page
+    navigate(`/users/${encodeURIComponent(username)}`);
   };
 
   return (
@@ -99,7 +102,7 @@ export default function RankPage(props: Route.ComponentProps) {
         {userRankings.length > 0 && (
           <Card 
             className={cn("text-center cursor-pointer", getRankCardStyle(1))}
-            onClick={() => handleUserClick(userRankings[0].id)}
+            onClick={() => handleUserClick(userRankings[0].username)}
           >
             <CardHeader className="pb-4">
               <div className="flex justify-center mb-3">
@@ -150,10 +153,10 @@ export default function RankPage(props: Route.ComponentProps) {
                 <div 
                   key={user.id}
                   className={cn(
-                    "flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md",
+                    "flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md cursor-pointer",
                     getRankCardStyle(user.rank)
                   )}
-                  onClick={() => handleUserClick(user.id)}
+                  onClick={() => handleUserClick(user.username)}
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-3">
@@ -169,7 +172,7 @@ export default function RankPage(props: Route.ComponentProps) {
                     <div>
                       <h3 className="font-semibold text-lg">{user.username}</h3>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <Badge variant="outline" size="sm">
+                        <Badge variant="outline">
                           Level {user.level}
                         </Badge>
                         <div className="flex items-center gap-1">

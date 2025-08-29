@@ -161,6 +161,7 @@ export default function EnhancedBlockStackingGame({
   const [towerHistory, setTowerHistory] = useState<TowerHistoryEntry[]>([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [pixelSize, setPixelSize] = useState(getPixelSize());
+  const [isTowerMode, setIsTowerMode] = useState(true); // New state for mode toggle
 
   // 화면 크기 변경 시 픽셀 크기 업데이트
   useEffect(() => {
@@ -383,13 +384,19 @@ export default function EnhancedBlockStackingGame({
     }
   };
 
-  // Support check function
+  // Support check function - modified to support both modes
   const hasSupport = (x: number, y: number): boolean => {
     // 이미 블록이 있으면 false
     if (blocks.some((block) => block.x === x && block.y === y)) {
       return false;
     }
   
+    // Free placement mode에서는 모든 위치에 배치 가능
+    if (!isTowerMode) {
+      return true;
+    }
+  
+    // Tower mode에서는 기존 로직 사용
     // 바닥이면 true
     if (y === GRID_HEIGHT - 1) return true;
   
@@ -675,6 +682,65 @@ export default function EnhancedBlockStackingGame({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Mode Toggle */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <PixelTower className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">Mode:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-xs px-2 py-1 rounded-full transition-colors",
+                    isTowerMode 
+                      ? "bg-blue-100 text-blue-700 font-medium" 
+                      : "bg-gray-100 text-gray-500"
+                  )}>
+                    Tower
+                  </span>
+                  <span className={cn(
+                    "text-xs px-2 py-1 rounded-full transition-colors",
+                    !isTowerMode 
+                      ? "bg-purple-100 text-purple-700 font-medium" 
+                      : "bg-gray-100 text-gray-500"
+                  )}>
+                    Free
+                  </span>
+                </div>
+              </div>
+              
+              {/* Toggle Switch */}
+              <div className="flex items-center">
+                <button
+                  onClick={() => setIsTowerMode(!isTowerMode)}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                    isTowerMode ? "bg-blue-600" : "bg-purple-600"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                      isTowerMode ? "translate-x-6" : "translate-x-1"
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Mode Description */}
+            <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
+              <div className="font-medium mb-1">
+                {isTowerMode ? "🏗️ Tower Mode" : "💎 Free Placement Mode"}
+              </div>
+              <div>
+                {isTowerMode 
+                  ? "Blocks must be placed adjacent to existing blocks or the ground (like building a tower)"
+                  : "Blocks can be placed anywhere on the grid (like a gem matching game)"
+                }
+              </div>
+            </div>
+
             {/* Custom Color Picker - Compact */}
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200">
               <span className="text-xs text-gray-500 font-medium">Custom:</span>
@@ -744,12 +810,12 @@ export default function EnhancedBlockStackingGame({
                   </div>
                   <div className="text-xs text-green-600">Available Bricks</div>
                 </div>
-                <div className="text-center">
+                {/* <div className="text-center">
                   <div className="text-lg md:text-xl font-bold text-purple-800">
                     {Math.max(...blocks.map((b) => GRID_HEIGHT - b.y), 0)}
                   </div>
                   <div className="text-xs text-purple-600">Tower Height</div>
-                </div>
+                </div> */}
               </div>
             </div>
 
