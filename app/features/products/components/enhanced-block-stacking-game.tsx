@@ -18,6 +18,7 @@ import {
   History,
   Clock,
   Zap,
+  Eye,
 } from "lucide-react";
 import {
   PixelCheck,
@@ -136,6 +137,8 @@ export default function EnhancedBlockStackingGame({
   calendarEvents = [], // Calendar events from loader
   overallRankings = [], // Global rankings data
   currentUserId = "", // Current user ID for highlighting
+  readOnly = false, // New prop for read-only mode
+  username = "", // Username for display
 }: {
   initialBlocks?: Block[];
   totalBlocks?: number;
@@ -143,9 +146,16 @@ export default function EnhancedBlockStackingGame({
   calendarEvents?: CalendarEvent[];
   overallRankings?: any[];
   currentUserId?: string;
+  readOnly?: boolean;
+  username?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
+
+  // Update blocks when initialBlocks change (for read-only mode)
+  useEffect(() => {
+    setBlocks(initialBlocks);
+  }, [initialBlocks]);
   const [currentColor, setCurrentColor] = useState("#3b82f6");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(
@@ -329,6 +339,8 @@ export default function EnhancedBlockStackingGame({
   };
 
   const handleMouseClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (readOnly) return; // Disable editing in read-only mode
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -346,6 +358,8 @@ export default function EnhancedBlockStackingGame({
 
   // Touch event handlers for mobile
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (readOnly) return; // Disable editing in read-only mode
+    
     e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -677,106 +691,114 @@ export default function EnhancedBlockStackingGame({
       <div className="flex-1">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg md:text-xl">
-              Build Your Tower
+            <CardTitle className="text-xs md:text-sm">
+            {readOnly ? <><Eye className="w-4 h-4 inline mr-1" />{username}'s Tower</> : "Build Your Tower"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Mode Toggle */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <PixelTower className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">Mode:</span>
+            {/* Mode Toggle - Hidden in read-only mode */}
+            {!readOnly && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <PixelTower className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">Mode:</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "text-xs px-2 py-1 rounded-full transition-colors",
+                      isTowerMode 
+                        ? "bg-blue-100 text-blue-700 font-medium" 
+                        : "bg-gray-100 text-gray-500"
+                    )}>
+                      Tower
+                    </span>
+                    <span className={cn(
+                      "text-xs px-2 py-1 rounded-full transition-colors",
+                      !isTowerMode 
+                        ? "bg-purple-100 text-purple-700 font-medium" 
+                        : "bg-gray-100 text-gray-500"
+                    )}>
+                      Free
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "text-xs px-2 py-1 rounded-full transition-colors",
-                    isTowerMode 
-                      ? "bg-blue-100 text-blue-700 font-medium" 
-                      : "bg-gray-100 text-gray-500"
-                  )}>
-                    Tower
-                  </span>
-                  <span className={cn(
-                    "text-xs px-2 py-1 rounded-full transition-colors",
-                    !isTowerMode 
-                      ? "bg-purple-100 text-purple-700 font-medium" 
-                      : "bg-gray-100 text-gray-500"
-                  )}>
-                    Free
-                  </span>
-                </div>
-              </div>
-              
-              {/* Toggle Switch */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => setIsTowerMode(!isTowerMode)}
-                  className={cn(
-                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                    isTowerMode ? "bg-blue-600" : "bg-purple-600"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                      isTowerMode ? "translate-x-6" : "translate-x-1"
-                    )}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Mode Description */}
-            <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
-              <div className="font-medium mb-1">
-                {isTowerMode ? "🏗️ Tower Mode" : "💎 Free Placement Mode"}
-              </div>
-              <div>
-                {isTowerMode 
-                  ? "Blocks must be placed adjacent to existing blocks or the ground (like building a tower)"
-                  : "Blocks can be placed anywhere on the grid (like a gem matching game)"
-                }
-              </div>
-            </div>
-
-            {/* Custom Color Picker - Compact */}
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200">
-              <span className="text-xs text-gray-500 font-medium">Custom:</span>
-              <input
-                type="color"
-                value={currentColor}
-                onChange={(e) => setCurrentColor(e.target.value)}
-                className="w-6 h-6 rounded border border-gray-300 cursor-pointer"
-              />
-              <input
-                type="text"
-                value={currentColor}
-                onChange={(e) => setCurrentColor(e.target.value)}
-                placeholder="#000000"
-                className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-            {/* Color Picker */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-xs text-gray-500 font-medium">Choose Block Color:</label>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_COLORS.map((color) => (
+                
+                {/* Toggle Switch */}
+                <div className="flex items-center">
                   <button
-                    key={color}
-                    onClick={() => setCurrentColor(color)}
+                    onClick={() => setIsTowerMode(!isTowerMode)}
                     className={cn(
-                      "w-6 h-6 rounded border-2 transition-all",
-                      currentColor === color
-                        ? "border-gray-900 scale-110"
-                        : "border-gray-300 hover:border-gray-600"
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                      isTowerMode ? "bg-blue-600" : "bg-purple-600"
                     )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
+                  >
+                    <span
+                      className={cn(
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                        isTowerMode ? "translate-x-6" : "translate-x-1"
+                      )}
+                    />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Mode Description - Hidden in read-only mode */}
+            {!readOnly && (
+              <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
+                <div className="font-medium mb-1">
+                  {isTowerMode ? "🏗️ Tower Mode" : "💎 Free Placement Mode"}
+                </div>
+                <div>
+                  {isTowerMode 
+                    ? "Blocks must be placed adjacent to existing blocks or the ground (like building a tower)"
+                    : "Blocks can be placed anywhere on the grid (like a gem matching game)"
+                  }
+                </div>
+              </div>
+            )}
+
+            {/* Custom Color Picker - Hidden in read-only mode */}
+            {!readOnly && (
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200">
+                <span className="text-xs text-gray-500 font-medium">Custom:</span>
+                <input
+                  type="color"
+                  value={currentColor}
+                  onChange={(e) => setCurrentColor(e.target.value)}
+                  className="w-6 h-6 rounded border border-gray-300 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={currentColor}
+                  onChange={(e) => setCurrentColor(e.target.value)}
+                  placeholder="#000000"
+                  className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            )}
+            {/* Color Picker - Hidden in read-only mode */}
+            {!readOnly && (
+              <div className="flex flex-col space-y-2">
+                <label className="text-xs text-gray-500 font-medium">Choose Block Color:</label>
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setCurrentColor(color)}
+                      className={cn(
+                        "w-6 h-6 rounded border-2 transition-all",
+                        currentColor === color
+                          ? "border-gray-900 scale-110"
+                          : "border-gray-300 hover:border-gray-600"
+                      )}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Canvas */}
             <div className="border rounded-lg overflow-hidden">
@@ -788,7 +810,10 @@ export default function EnhancedBlockStackingGame({
                 onClick={handleMouseClick}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
-                className="cursor-pointer pixelated w-full h-full"
+                className={cn(
+                  "pixelated w-full h-full",
+                  readOnly ? "cursor-default" : "cursor-pointer"
+                )}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -796,81 +821,86 @@ export default function EnhancedBlockStackingGame({
                 }}
               />
 
-              {/* Tower Stats - Attached to Canvas Bottom */}
-              <div className="flex justify-center gap-4 md:gap-8 py-2 md:py-3 px-2 md:px-4 border-t bg-white">
-                <div className="text-center">
-                  <div className="text-lg md:text-xl font-bold text-blue-800">
-                    {blocks.length}
+              {/* Tower Stats - Hidden in read-only mode */}
+              {!readOnly && (
+                <div className="flex justify-center gap-4 md:gap-8 py-2 md:py-3 px-2 md:px-4 border-t bg-white">
+                  <div className="text-center">
+                    <div className="text-lg md:text-xl font-bold text-blue-800">
+                      {blocks.length}
+                    </div>
+                    <div className="text-xs text-blue-600">Blocks Placed</div>
                   </div>
-                  <div className="text-xs text-blue-600">Blocks Placed</div>
+                  <div className="text-center">
+                    <div className="text-lg md:text-xl font-bold text-green-800">
+                      {availableBricks}
+                    </div>
+                    <div className="text-xs text-green-600">Available Bricks</div>
+                  </div>
+                  {/* <div className="text-center">
+                    <div className="text-lg md:text-xl font-bold text-purple-800">
+                      {Math.max(...blocks.map((b) => GRID_HEIGHT - b.y), 0)}
+                    </div>
+                    <div className="text-xs text-purple-600">Tower Height</div>
+                  </div> */}
                 </div>
-                <div className="text-center">
-                  <div className="text-lg md:text-xl font-bold text-green-800">
-                    {availableBricks}
-                  </div>
-                  <div className="text-xs text-green-600">Available Bricks</div>
-                </div>
-                {/* <div className="text-center">
-                  <div className="text-lg md:text-xl font-bold text-purple-800">
-                    {Math.max(...blocks.map((b) => GRID_HEIGHT - b.y), 0)}
-                  </div>
-                  <div className="text-xs text-purple-600">Tower Height</div>
-                </div> */}
+              )}
+            </div>
+
+            {/* Action Buttons - Hidden in read-only mode */}
+            {!readOnly && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Button
+                  onClick={handleConfirmBlocks}
+                  disabled={!isBuilding}
+                  variant="default"
+                  className="flex items-center gap-2 text-sm"
+                  size="sm"
+                >
+                  <PixelCheck className="w-4 h-4" />
+                  <span className="hidden sm:inline">Confirm & Save</span>
+                  <span className="sm:hidden">Save</span>
+                </Button>
+
+                <Button
+                  onClick={handleUndo}
+                  disabled={blocks.length === 0}
+                  variant="outline"
+                  className="flex items-center gap-2 text-sm"
+                  size="sm"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Undo
+                </Button>
+
+                <Button
+                  onClick={handleResetTower}
+                  variant="destructive"
+                  className="flex items-center gap-2 text-sm"
+                  size="sm"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Reset Tower</span>
+                  <span className="sm:hidden">Reset</span>
+                </Button>
+
+                <Button
+                  onClick={loadHistory}
+                  variant="outline"
+                  className="flex items-center gap-2 text-sm"
+                  size="sm"
+                >
+                  <History className="w-4 h-4" />
+                  History
+                </Button>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Button
-                onClick={handleConfirmBlocks}
-                disabled={!isBuilding}
-                variant="default"
-                className="flex items-center gap-2 text-sm"
-                size="sm"
-              >
-                <PixelCheck className="w-4 h-4" />
-                <span className="hidden sm:inline">Confirm & Save</span>
-                <span className="sm:hidden">Save</span>
-              </Button>
-
-              <Button
-                onClick={handleUndo}
-                disabled={blocks.length === 0}
-                variant="outline"
-                className="flex items-center gap-2 text-sm"
-                size="sm"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Undo
-              </Button>
-
-              <Button
-                onClick={handleResetTower}
-                variant="destructive"
-                className="flex items-center gap-2 text-sm"
-                size="sm"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Reset Tower</span>
-                <span className="sm:hidden">Reset</span>
-              </Button>
-
-              <Button
-                onClick={loadHistory}
-                variant="outline"
-                className="flex items-center gap-2 text-sm"
-                size="sm"
-              >
-                <History className="w-4 h-4" />
-                History
-              </Button>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Sidebar */}
-      <div className="w-full lg:w-80 space-y-4">
+      {/* Sidebar - Hidden in read-only mode */}
+      {!readOnly && (
+        <div className="w-full lg:w-80 space-y-4">
         {/* Calendar */}
         <Card>
           <CardHeader>
@@ -1130,6 +1160,7 @@ export default function EnhancedBlockStackingGame({
           </CardContent>
         </Card>
       </div>
+        )}
 
       {/* History Modal */}
       {showHistory && (

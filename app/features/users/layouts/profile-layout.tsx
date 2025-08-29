@@ -23,6 +23,7 @@ import {
   Star
 } from "lucide-react";
 import { updateUserAvatar } from "../mutation";
+import EnhancedBlockStackingGame from "~/features/products/components/enhanced-block-stacking-game";
 
 export const meta: Route.MetaFunction = ({ data }) => {
   return [{ title: `${data?.user.name} | dotLife` }];
@@ -42,6 +43,7 @@ export const loader = async ({
     username: params.username,
   });
   
+
   // Check if this is the current user's profile
   const isOwnProfile = currentUser && user.profile_id === currentUser.id;
 
@@ -59,12 +61,42 @@ export const loader = async ({
     .eq("profile_id", user.profile_id)
     .single();
 
-  // Get tower blocks count
+  // Get Quest data
+  console.log("=== Quest Data Query ===");
+  console.log("Querying daily_quests for profile_id:", user.profile_id);
+  console.log("Profile ID type:", typeof user.profile_id);
+  console.log("Profile ID value:", user.profile_id);
+  
+  const { data: questData, error: questDataError } = await client
+    .from("daily_quests")
+    .select("*")
+    .eq("profile_id", user.profile_id);
+  
+  console.log("Quest data query result:");
+  console.log("- Data:", questData);
+  console.log("- Error:", questDataError);
+  console.log("- Quest count:", questData?.length || 0);
+
+  
   const { data: towerBlocks, error: blocksError } = await client
     .from("tower_blocks")
-    .select("block_id")
+    .select("x_position, y_position, color, build_date")
     .eq("profile_id", user.profile_id)
-    .eq("is_confirmed", true);
+    .eq("is_confirmed", true)
+    .order("created_at", { ascending: true });
+  
+
+  // Transform tower blocks data to match Block interface
+  const transformedTowerBlocks = towerBlocks?.map(block => ({
+    x: block.x_position,
+    y: block.y_position,
+    color: block.color,
+    date: block.build_date
+  })) || [];
+
+  console.log("Transformed tower blocks:", transformedTowerBlocks);
+  console.log("user.profile_id:", user.profile_id);
+  console.log("questData:", questData);
 
   // Get quest completion stats
   const { data: questHistory, error: questError } = await client
@@ -75,7 +107,7 @@ export const loader = async ({
     .limit(30); // Last 30 days
 
   // Calculate stats
-  const totalBlocks = towerBlocks?.length || 0;
+  const totalBlocks = transformedTowerBlocks?.length || 0;
   const totalQuests = questHistory?.length || 0;
   const perfectDays = questHistory?.filter(q => q.perfect_day).length || 0;
   const totalBricksEarned = questHistory?.reduce((sum, q) => sum + q.total_bricks_earned, 0) || 0;
@@ -105,7 +137,9 @@ export const loader = async ({
       totalQuests,
       perfectDays,
       totalBricksEarned
-    }
+    },
+    questData: questData || [],
+    towerBlocks: transformedTowerBlocks
   };
 };
 
@@ -175,24 +209,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export default function ProfileLayout({ loaderData }: Route.ComponentProps) {
-  const { user, isOwnProfile, playerStats, towerStats, stats } = loaderData;
+  const { user, isOwnProfile, playerStats, towerStats, stats, towerBlocks, questData } = loaderData;
 
   return (
-    <div className="space-y-8">
-      {/* Profile Header */}
-      <div className="flex items-center gap-6">
-        <Avatar className="size-32">
+    <div className="space-y-6">
+      {/* Profile Header - Compact */}
+      <div className="flex items-center gap-4">
+        <Avatar className="size-16">
           {user.avatar ? (
             <AvatarImage src={user.avatar} />
           ) : (
-            <AvatarFallback className="text-3xl">
+            <AvatarFallback className="text-xl">
               {user.name[0]}
             </AvatarFallback>
           )}
         </Avatar>
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">{user.name}</h1>
+            <h1 className="text-2xl font-bold">{user.name}</h1>
             <Badge variant="outline" className="text-xs font-normal">
               Level {playerStats.level}
             </Badge>
@@ -211,131 +245,39 @@ export default function ProfileLayout({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              <div>
-                <p className="text-sm font-medium">Total Blocks</p>
-                <p className="text-2xl font-bold">{stats.totalBlocks}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats and Tower Container */}
+      <div className="max-w-3xl space-y-0">
+        {/* Stats - Compact and minimal above tower */}
+        <div className="w-full flex items-center justify-center gap-6 py-1 px-3">
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-800">{stats.totalBlocks}</div>
+            <div className="text-xs text-gray-500">Blocks</div>
+          </div>
+          <div className="w-px h-6 bg-gray-300"></div>
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-800">{questData?.length || 0}</div>
+            <div className="text-xs text-gray-500">Quests</div>
+          </div>
+          <div className="w-px h-6 bg-gray-300"></div>
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-800">{playerStats.consecutive_days}</div>
+            <div className="text-xs text-gray-500">Streak</div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Target className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm font-medium">Quests Completed</p>
-                <p className="text-2xl font-bold">{stats.totalQuests}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Star className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm font-medium">Perfect Days</p>
-                <p className="text-2xl font-bold">{stats.perfectDays}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Flame className="h-5 w-5 text-orange-500" />
-              <div>
-                <p className="text-sm font-medium">Tower Height</p>
-                <p className="text-2xl font-bold">{towerStats.tower_height}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Progress Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm">XP Progress</span>
-              <span className="text-sm font-medium">
-                {playerStats.current_xp} / {playerStats.xp_to_next_level}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full" 
-                style={{ 
-                  width: `${(playerStats.current_xp / playerStats.xp_to_next_level) * 100}%` 
-                }}
-              />
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm">Available Bricks</span>
-              <span className="text-sm font-medium">{playerStats.available_bricks}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Streak
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-orange-500">
-                {playerStats.consecutive_days}
-              </p>
-              <p className="text-sm text-muted-foreground">Consecutive Days</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Tower Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm">Total Blocks</span>
-              <span className="text-sm font-medium">{towerStats.total_blocks}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm">Tower Width</span>
-              <span className="text-sm font-medium">{towerStats.tower_width}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm">Views</span>
-              <span className="text-sm font-medium">{towerStats.views}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm">Likes</span>
-              <span className="text-sm font-medium">{towerStats.likes}</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tower Viewer */}
+        <div className="w-full">
+          <EnhancedBlockStackingGame 
+            initialBlocks={towerBlocks}
+            totalBlocks={towerBlocks.length}
+            remainingBlocks={0}
+            calendarEvents={[]}
+            overallRankings={[]}
+            currentUserId=""
+            readOnly={true}
+            username={user.username}
+          />
+        </div>
       </div>
 
       {/* Content Area */}
