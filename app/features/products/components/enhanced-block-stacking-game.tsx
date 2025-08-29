@@ -752,8 +752,8 @@ export default function EnhancedBlockStackingGame({
                 </div>
                 <div>
                   {isTowerMode 
-                    ? "Blocks must be placed adjacent to existing blocks or the ground (like building a tower)"
-                    : "Blocks can be placed anywhere on the grid (like a gem matching game)"
+                    ? "Blocks must be placed adjacent to existing blocks or the ground"
+                    : "Blocks can be placed anywhere on the grid"
                   }
                 </div>
               </div>
