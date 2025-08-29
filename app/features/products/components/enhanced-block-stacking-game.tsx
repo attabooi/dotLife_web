@@ -826,9 +826,9 @@ export default function EnhancedBlockStackingGame({
                 <div className="flex justify-center gap-4 md:gap-8 py-2 md:py-3 px-2 md:px-4 border-t bg-white">
                   <div className="text-center">
                     <div className="text-lg md:text-xl font-bold text-blue-800">
-                      {blocks.length}
+                      {totalBlocks}
                     </div>
-                    <div className="text-xs text-blue-600">Blocks Placed</div>
+                    <div className="text-xs text-blue-600">Total Bricks</div>
                   </div>
                   <div className="text-center">
                     <div className="text-lg md:text-xl font-bold text-green-800">
@@ -836,12 +836,12 @@ export default function EnhancedBlockStackingGame({
                     </div>
                     <div className="text-xs text-green-600">Available Bricks</div>
                   </div>
-                  {/* <div className="text-center">
+                  <div className="text-center">
                     <div className="text-lg md:text-xl font-bold text-purple-800">
-                      {Math.max(...blocks.map((b) => GRID_HEIGHT - b.y), 0)}
+                      {blocks.length}
                     </div>
-                    <div className="text-xs text-purple-600">Tower Height</div>
-                  </div> */}
+                    <div className="text-xs text-purple-600">Blocks Placed</div>
+                  </div>
                 </div>
               )}
             </div>

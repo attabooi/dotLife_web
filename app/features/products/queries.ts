@@ -58,6 +58,13 @@ export async function loadUserTower(request: Request, profileId: string) {
     throw statsError;
   }
 
+  // Debug logging
+  console.log('=== loadUserTower Debug ===');
+  console.log('Profile ID:', profileId);
+  console.log('Player Stats:', playerStats);
+  console.log('Available Bricks from DB:', playerStats?.available_bricks);
+  console.log('Total Bricks from DB:', playerStats?.total_bricks);
+
   // available_bricks는 퀘스트에서 얻은 사용 가능한 브릭 수
   const availableBricks = playerStats?.available_bricks || 0;
   
@@ -65,12 +72,18 @@ export async function loadUserTower(request: Request, profileId: string) {
   const usedBlocks = formattedBlocks.filter(block => block.saved).length;
   const remainingBlocks = Math.max(0, availableBricks - usedBlocks);
 
-  const result = {
-    blocks: formattedBlocks,
-    stats: stats || null,
-    totalBlocks: availableBricks,
-    remainingBlocks: remainingBlocks
-  };
+  console.log('Formatted Blocks:', formattedBlocks);
+  console.log('Used Blocks (confirmed):', usedBlocks);
+  console.log('Available Bricks:', availableBricks);
+  console.log('Remaining Blocks:', remainingBlocks);
+
+             const result = {
+             blocks: formattedBlocks,
+             stats: stats || null,
+             totalBlocks: playerStats?.total_bricks || 0, // total_bricks를 사용
+             availableBricks: availableBricks, // available_bricks도 별도로 반환
+             remainingBlocks: remainingBlocks
+           };
 
   return result;
 }

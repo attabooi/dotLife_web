@@ -90,8 +90,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       userId: user.id,
       playerStats,
       towerBlocks: towerData.blocks,
-      totalBlocks: towerData.totalBlocks,
-      remainingBlocks: towerData.remainingBlocks,
+      totalBlocks: towerData.totalBlocks, // total_bricks (9)
+      availableBricks: towerData.availableBricks, // available_bricks (6)
+      remainingBlocks: towerData.remainingBlocks, // remaining blocks (0)
       calendarEvents: calendarData,
       overallRankings,
     };
@@ -187,7 +188,7 @@ export default function MyTowerPage({ loaderData }: Route.ComponentProps) {
         <EnhancedBlockStackingGame 
           initialBlocks={loaderData.towerBlocks}
           totalBlocks={loaderData.totalBlocks}
-          remainingBlocks={loaderData.remainingBlocks}
+          remainingBlocks={loaderData.availableBricks}
           calendarEvents={loaderData.calendarEvents}
           overallRankings={loaderData.overallRankings}
           currentUserId={loaderData.userId}
