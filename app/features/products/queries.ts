@@ -172,23 +172,22 @@ export async function confirmBlocks(request: Request, profileId: string, session
     return { message: "No blocks to confirm" };
   }
 
-  // 플레이어 스탯 업데이트
+  // 플레이어 스탯 업데이트 (벽돌 차감만, 추가는 트리거에서 처리)
   const { data: playerStats, error: statsError } = await client
     .from("player_stats")
-    .select("available_bricks, total_bricks")
+    .select("available_bricks")
     .eq("profile_id", profileId)
     .single();
 
   if (statsError) throw statsError;
 
   const newAvailableBricks = Math.max(0, (playerStats?.available_bricks || 0) - blocks.length);
-  const newTotalBricks = (playerStats?.total_bricks || 0) + blocks.length;
 
   const { error: updateStatsError } = await client
     .from("player_stats")
     .update({
-      available_bricks: newAvailableBricks,
-      total_bricks: newTotalBricks
+      available_bricks: newAvailableBricks
+      // total_bricks는 트리거에서 처리하므로 여기서 제거
     })
     .eq("profile_id", profileId);
 
