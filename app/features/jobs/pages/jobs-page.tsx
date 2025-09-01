@@ -100,6 +100,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const action = formData.get("action") as string;
 
   try {
+    console.log('🔍 Action Debug - Received action:', action);
+    console.log('🔍 Action Debug - FormData entries:', Array.from(formData.entries()));
+    
     if (action === "create") {
       const title = formData.get("title") as string;
       const description = formData.get("description") as string;
@@ -110,7 +113,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
       const questId = Number(formData.get("questId"));
       await completeQuest(request, questId);
     } else if (action === "confirm") {
+      console.log('🎯 Confirm Action Triggered!');
       const result = await confirmQuests(request);
+      console.log('✅ Confirm Result:', result);
       return { success: true, message: result.message };
     } else if (action === "delete") {
       const questId = Number(formData.get("questId"));
