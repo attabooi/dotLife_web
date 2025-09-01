@@ -114,9 +114,17 @@ export const action = async ({ request }: Route.ActionArgs) => {
       await completeQuest(request, questId);
     } else if (action === "confirm") {
       console.log('🎯 Confirm Action Triggered!');
-      const result = await confirmQuests(request);
-      console.log('✅ Confirm Result:', result);
-      return { success: true, message: result.message };
+      try {
+        const result = await confirmQuests(request);
+        console.log('✅ Confirm Result:', result);
+        return { success: true, message: result.message };
+      } catch (error) {
+        console.error('❌ Confirm Error:', error);
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : "Confirm failed" 
+        };
+      }
     } else if (action === "delete") {
       const questId = Number(formData.get("questId"));
       await deleteQuest(request, questId);

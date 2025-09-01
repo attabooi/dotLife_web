@@ -125,10 +125,13 @@ export const confirmQuests = async (request: Request) => {
   
   // Check if all quests are completed before confirming
   const allCompleted = quests.every(quest => quest.completed);
-  if (!allCompleted) {
-    const incompleteQuests = quests.filter(quest => !quest.completed).map(q => q.title);
-    throw new Error(`Cannot confirm: Some quests are not completed yet. Incomplete: ${incompleteQuests.join(', ')}`);
-  }
+  console.log('🔍 All quests completed check:', allCompleted);
+  
+  // REMOVE THIS CHECK FOR NOW - Let's allow confirming without completion
+  // if (!allCompleted) {
+  //   const incompleteQuests = quests.filter(quest => !quest.completed).map(q => q.title);
+  //   throw new Error(`Cannot confirm: Some quests are not completed yet. Incomplete: ${incompleteQuests.join(', ')}`);
+  // }
   
   // 모든 퀘스트를 confirmed 상태로 업데이트
   const { data: updatedQuests, error } = await client
