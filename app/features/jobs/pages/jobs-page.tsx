@@ -225,6 +225,19 @@ export default function QuestPage({ loaderData }: Route.ComponentProps) {
   // Check if quests are confirmed
   const isConfirmed = quests.length > 0 && quests.every((q: any) => q.confirmed);
   
+  // Debug logging for production issue
+  console.log('🔍 Quest Debug Info:');
+  console.log('Total quests:', quests.length);
+  console.log('Quests:', quests.map((q: any) => ({ 
+    id: q.quest_id, 
+    title: q.title, 
+    completed: q.completed, 
+    confirmed: q.confirmed 
+  })));
+  console.log('All completed?', quests.every((q: any) => q.completed));
+  console.log('All confirmed?', quests.every((q: any) => q.confirmed));
+  console.log('isConfirmed:', isConfirmed);
+  
   // Check if it's past midnight (00:00) - quests are expired
   const isPastMidnight = DateTime.now().setZone("Asia/Seoul").toFormat("HH") === "00";
 

@@ -92,7 +92,12 @@ export const confirmQuests = async (request: Request) => {
   
   if (!user) throw new Error("Unauthorized");
   
-  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  const today = DateTime.now().setZone("Asia/Seoul").toFormat("yyyy-LL-dd"); // YYYY-MM-DD format
+  
+  console.log('🔍 confirmQuests Debug - User ID:', user.id);
+  console.log('🔍 confirmQuests Debug - Today (Asia/Seoul):', today);
+  console.log('🔍 confirmQuests Debug - Server time (UTC):', new Date().toISOString());
+  console.log('🔍 confirmQuests Debug - Server time (local):', new Date().toLocaleDateString('en-CA'));
   
   // 먼저 오늘의 퀘스트가 있는지 확인
   const { data: quests, error: questsError } = await client
@@ -101,20 +106,44 @@ export const confirmQuests = async (request: Request) => {
     .eq("profile_id", user.id)
     .eq("quest_date", today);
     
-  if (questsError) throw questsError;
+  if (questsError) {
+    console.error('🚨 confirmQuests Error - questsError:', questsError);
+    throw questsError;
+  }
+  
+  console.log('🔍 confirmQuests Debug - Found quests:', quests?.length || 0);
+  console.log('🔍 confirmQuests Debug - Quests details:', quests?.map(q => ({
+    id: q.quest_id,
+    title: q.title,
+    completed: q.completed,
+    confirmed: q.confirmed
+  })));
   
   if (!quests || quests.length === 0) {
     throw new Error("No quests found for today");
   }
   
+  // Check if all quests are completed before confirming
+  const allCompleted = quests.every(quest => quest.completed);
+  if (!allCompleted) {
+    const incompleteQuests = quests.filter(quest => !quest.completed).map(q => q.title);
+    throw new Error(`Cannot confirm: Some quests are not completed yet. Incomplete: ${incompleteQuests.join(', ')}`);
+  }
+  
   // 모든 퀘스트를 confirmed 상태로 업데이트
-  const { error } = await client
+  const { data: updatedQuests, error } = await client
     .from("daily_quests")
     .update({ confirmed: true })
     .eq("profile_id", user.id)
-    .eq("quest_date", today);
+    .eq("quest_date", today)
+    .select();
     
-  if (error) throw error;
+  if (error) {
+    console.error('🚨 confirmQuests Error - updateError:', error);
+    throw error;
+  }
+  
+  console.log('✅ confirmQuests Success - Updated quests:', updatedQuests?.length || 0);
   
   return { 
     success: true, 
@@ -130,7 +159,7 @@ export const checkAndAwardBricks = async (request: Request) => {
   
   if (!user) throw new Error("Unauthorized");
   
-  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  const today = DateTime.now().setZone("Asia/Seoul").toFormat("yyyy-LL-dd"); // YYYY-MM-DD format
   
   // Get today's quests
   const { data: quests, error: questsError } = await client
